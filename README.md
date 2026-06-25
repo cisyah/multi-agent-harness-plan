@@ -40,6 +40,6 @@ A systematic exploration of Harness engineering — using a multi-agent financia
 
 ## 📸 Screenshots
 
-![Overview](screenshot-overview.png)
+![Overview](screenshot-overview.jpg)
 
 ---
