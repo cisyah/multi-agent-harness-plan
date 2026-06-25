@@ -1,0 +1,1465 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Harness 工程下的 Multi-Agent 股票研究助手</title>
+  <meta name="description" content="以 Multi-Agent 股票研究助手为主线，逐轮呈现 Harness 工程迭代方案。">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #ffffff;
+      --bg-soft: #f6f7f9;
+      --bg-elevated: #ffffff;
+      --text: #111114;
+      --text-soft: #51525a;
+      --text-muted: #777985;
+      --border: #e4e6eb;
+      --border-strong: #cfd3dc;
+      --code-bg: #0e1525;
+      --code-border: #263248;
+      --code-text: #d8e4f2;
+      --link: #2563eb;
+      --link-underline: #93c5fd;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --green: #059669;
+      --green-soft: #ecfdf5;
+      --amber: #d97706;
+      --amber-soft: #fffbeb;
+      --red: #dc2626;
+      --red-soft: #fef2f2;
+      --violet: #7c3aed;
+      --violet-soft: #f5f3ff;
+      --diagram-bg: #fafbfc;
+      --diagram-panel: #f8fafc;
+      --diagram-stroke: #94a3b8;
+      --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+      --radius: 5px;
+      --header-h: 58px;
+      --shell: 1240px;
+      --sidebar: 282px;
+      --article: 840px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 82px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text-soft);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 16px;
+      line-height: 1.72;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: var(--link);
+      text-decoration-color: var(--link-underline);
+      text-underline-offset: 3px;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 200;
+      transform: translateY(-140%);
+      border-radius: 4px;
+      background: var(--text);
+      color: var(--bg);
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 120;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      height: var(--header-h);
+      border-bottom: 1px solid var(--border);
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(14px);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      max-width: var(--shell);
+      height: 100%;
+      margin: 0 auto;
+      padding: 0 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 1 auto;
+      min-width: 260px;
+      overflow: hidden;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .brand-mark {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius);
+      background: var(--text);
+      color: var(--bg);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: lowercase;
+    }
+
+    .brand-text {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow-wrap: anywhere;
+    }
+
+    .header-note {
+      margin-left: auto;
+      color: var(--text-muted);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .menu-button {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-width: 54px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      color: var(--text-soft);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(248px, var(--sidebar)) minmax(0, var(--article));
+      gap: 42px;
+      max-width: var(--shell);
+      margin: 0 auto;
+      padding: 34px 22px 72px;
+      align-items: start;
+      justify-content: start;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: calc(var(--header-h) + 24px);
+      align-self: start;
+      max-height: calc(100vh - var(--header-h) - 40px);
+      overflow: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    .sidebar-group {
+      margin-bottom: 22px;
+    }
+
+    .sidebar-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0 0 6px;
+      color: var(--text-muted);
+      font-size: 10.5px;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--blue);
+    }
+
+    .dot.green { background: var(--green); }
+    .dot.amber { background: var(--amber); }
+    .dot.red { background: var(--red); }
+    .dot.violet { background: var(--violet); }
+
+    .nav-list {
+      display: grid;
+      gap: 3px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .nav-list li {
+      margin: 0;
+    }
+
+    .chapter-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      min-height: 32px;
+      padding: 6px 6px;
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 12.5px;
+      line-height: 1.32;
+      text-decoration: none;
+      transition: background 0.16s ease, color 0.16s ease;
+    }
+
+    .chapter-link:hover,
+    .chapter-link.active {
+      background: var(--bg-soft);
+      color: var(--text);
+    }
+
+    .nav-index {
+      flex: 0 0 auto;
+      color: var(--text-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      font-weight: 650;
+    }
+
+    .chapter-title-link {
+      flex: 1 1 auto;
+      min-width: 0;
+      color: inherit;
+      font-weight: inherit;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    main {
+      min-width: 0;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .article-shell {
+      width: 100%;
+      max-width: var(--article);
+    }
+
+    .hero {
+      margin-bottom: 34px;
+      padding-bottom: 26px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .overview {
+      margin: 0 0 52px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-soft);
+      color: var(--text-soft);
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+
+    .overview h1 {
+      max-width: 760px;
+      margin: 18px 0 12px;
+      color: var(--text);
+      font-size: clamp(30px, 3.4vw, 42px);
+      line-height: 1.04;
+      font-weight: 800;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .dek {
+      max-width: 760px;
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 18px;
+      line-height: 1.72;
+    }
+
+    .page-overview {
+      padding-top: 0;
+    }
+
+    .overview-title-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .overview-title-row h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: 24px;
+      line-height: 1.22;
+      font-weight: 800;
+    }
+
+    .overview-version {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      border-radius: var(--radius);
+      background: var(--bg-soft);
+      color: var(--text-soft);
+      padding: 4px 9px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      font-weight: 760;
+      line-height: 1;
+    }
+
+    .overview-subtitle {
+      max-width: 700px;
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 15px;
+      line-height: 1.72;
+    }
+
+    .overview-quote {
+      margin: 16px 0 0;
+      border-left: 4px solid color-mix(in srgb, var(--blue) 58%, var(--green));
+      padding: 0 0 0 14px;
+      color: var(--text-soft);
+    }
+
+    .overview-quote p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.72;
+    }
+
+    .overview-quote em {
+      color: var(--text);
+      font-style: italic;
+      font-weight: 650;
+    }
+
+    .overview-sections {
+      display: grid;
+      gap: 28px;
+      margin-top: 30px;
+    }
+
+    .overview-block h3,
+    .overview-map h3,
+    .jump-index-title {
+      margin: 0 0 10px;
+      color: var(--text);
+      font-size: 19px;
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .jump-index-title {
+      font-size: 24px;
+      line-height: 1.22;
+    }
+
+    .overview-block p {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 15px;
+      line-height: 1.72;
+    }
+
+    .insight-list {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0 0;
+      padding-left: 22px;
+      color: var(--text-soft);
+      font-size: 15px;
+      line-height: 1.72;
+    }
+
+    .insight-list li {
+      padding-left: 0;
+    }
+
+    .overview-map {
+      min-width: 0;
+    }
+
+    .jump-index-block {
+      scroll-margin-top: calc(var(--header-h) + 22px);
+    }
+
+    .jump-index {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-soft);
+      padding: 18px 20px 20px;
+    }
+
+    .toc-grid,
+    .toc-chapter ul {
+      display: grid;
+      gap: 5px;
+      margin: 0;
+      padding: 0 0 0 4px;
+      list-style: none;
+    }
+
+    .toc-chapter {
+      margin: 0;
+    }
+
+    .jump-link {
+      display: grid;
+      grid-template-columns: 14px 34px minmax(0, 1fr);
+      align-items: baseline;
+      gap: 8px;
+      padding: 1px 0;
+      color: var(--text-soft);
+      font-size: 15px;
+      line-height: 1.5;
+      text-decoration: none;
+      transition: color 0.16s ease;
+    }
+
+    .jump-link::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      margin-top: 0.7em;
+      border-radius: 999px;
+      background: var(--text-muted);
+      opacity: 0.76;
+    }
+
+    .jump-link:hover,
+    .jump-link:hover .jump-no {
+      color: var(--blue);
+    }
+
+    .jump-link:hover::before {
+      background: var(--blue);
+      opacity: 1;
+    }
+
+    .jump-no {
+      color: var(--text-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      font-weight: 760;
+      transition: color 0.16s ease;
+    }
+
+    .toc-chapter ul {
+      margin: 3px 0 10px 56px;
+      padding: 0;
+    }
+
+    .toc-chapter ul .jump-link {
+      grid-template-columns: 12px minmax(0, 1fr);
+      font-size: 13px;
+    }
+
+    .toc-chapter ul .jump-no {
+      display: none;
+    }
+
+    .article {
+      max-width: var(--article);
+      color: var(--text-soft);
+      font-size: 15px;
+      line-height: 1.72;
+    }
+
+    .article h1,
+    .article h2,
+    .article h3,
+    .article h4 {
+      color: var(--text);
+      letter-spacing: 0;
+      scroll-margin-top: calc(var(--header-h) + 22px);
+    }
+
+    .article h1 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 88px 0 16px;
+      padding-top: 0;
+      border-top: 0;
+      font-size: 24px;
+      line-height: 1.22;
+      font-weight: 800;
+    }
+
+    .article h1:first-child {
+      margin-top: 0;
+    }
+
+    .section-no {
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 42px;
+      height: 34px;
+      border-radius: var(--radius);
+      background: var(--bg-soft);
+      color: var(--text-soft);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .article h2 {
+      margin: 44px 0 10px;
+      font-size: 19px;
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .article h3 {
+      margin: 28px 0 10px;
+      font-size: 17px;
+      line-height: 1.35;
+      font-weight: 750;
+    }
+
+    .article p {
+      margin: 10px 0;
+      color: var(--text-soft);
+    }
+
+    .article .revision-note {
+      margin: 6px 0 16px;
+      border-left: 2px solid #c3c8d0;
+      padding: 5px 0 5px 12px;
+      color: #626b7a;
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.55;
+    }
+
+    .article .revision-note strong {
+      color: inherit;
+      font-weight: 500;
+    }
+
+    .article blockquote {
+      position: relative;
+      margin: 20px 0;
+      border: 0;
+      border-radius: 6px;
+      background: linear-gradient(105deg, #f1f7fd 0%, #f2fcf6 100%);
+      padding: 24px 28px 24px 42px;
+      overflow: hidden;
+    }
+
+    .article blockquote::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: linear-gradient(180deg, #408cf4 0%, #13bfa8 100%);
+    }
+
+    .article blockquote p {
+      margin: 0;
+      color: #273fa9;
+      font-size: 15px;
+      font-weight: 650;
+      line-height: 1.72;
+    }
+
+    .article hr {
+      height: 1px;
+      border: 0;
+      margin: 28px 0;
+      background: var(--border);
+    }
+
+    .article ul,
+    .article ol {
+      padding-left: 24px;
+    }
+
+    .article li + li {
+      margin-top: 4px;
+    }
+
+    .article strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .article code:not(pre code) {
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--bg-soft);
+      color: color-mix(in srgb, var(--blue) 78%, var(--text));
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+      font-weight: 500;
+      line-height: 1.7;
+    }
+
+    .code-shell {
+      position: relative;
+      margin: 16px 0;
+    }
+
+    .code-label {
+      position: absolute;
+      top: 9px;
+      left: 12px;
+      z-index: 1;
+      color: #dbeafe;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .copy-code {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      z-index: 2;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #dbeafe;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+      padding: 5px 7px;
+      transition: border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .copy-code:hover {
+      border-color: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    pre {
+      overflow: auto;
+      margin: 0;
+      padding: 36px 18px 18px;
+      border: 1px solid var(--code-border);
+      border-radius: var(--radius);
+      background: var(--code-bg);
+      color: var(--code-text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      line-height: 1.58;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 16px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    table {
+      width: 100%;
+      min-width: 620px;
+      border-collapse: collapse;
+      font-size: 13px;
+      line-height: 1.55;
+      background: #fff;
+    }
+
+    th,
+    td {
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--bg-soft);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    td {
+      color: var(--text-soft);
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .mermaid-wrap {
+      margin: 20px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--diagram-bg);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+      overflow: hidden;
+    }
+
+    .diagram-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--diagram-panel);
+      padding: 10px 12px;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .diagram-scroll {
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .mermaid {
+      width: 100%;
+      min-width: 680px;
+      padding: 22px;
+      text-align: center;
+      background: var(--diagram-bg);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    .mermaid svg {
+      display: inline-block;
+      width: auto;
+      max-width: 100% !important;
+      height: auto;
+    }
+
+    .load-error {
+      padding: 16px;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius);
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
+    .mobile-panel {
+      position: fixed;
+      inset: var(--header-h) 0 0 auto;
+      z-index: 80;
+      width: min(360px, 88vw);
+      border-left: 1px solid var(--border);
+      background: var(--bg);
+      box-shadow: var(--shadow);
+      transform: translateX(102%);
+      transition: transform 0.18s ease;
+      overflow: auto;
+    }
+
+    .mobile-panel.is-open {
+      transform: translateX(0);
+    }
+
+    .mobile-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .mobile-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      color: var(--text-soft);
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .mobile-nav {
+      padding: 18px;
+    }
+
+    @media (max-width: 1180px) {
+      .header-inner {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        padding: 0 20px;
+      }
+
+      .header-note {
+        display: none;
+      }
+
+      .brand {
+        min-width: 0;
+        max-width: none;
+      }
+
+      .menu-button {
+        display: inline-flex;
+        margin-left: 0;
+      }
+
+      .shell {
+        display: block;
+        padding: 20px;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .overview h1 {
+        font-size: 26px;
+        line-height: 1.12;
+        word-break: break-word;
+      }
+
+      .dek {
+        font-size: 16px;
+        line-height: 1.62;
+      }
+
+      .mermaid {
+        min-width: 620px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .shell {
+        padding: 16px;
+      }
+
+      .header-inner {
+        min-height: var(--header-h);
+        padding: 0 16px;
+      }
+
+      .brand {
+        white-space: nowrap;
+      }
+
+      .brand-mark {
+        flex: 0 0 auto;
+      }
+
+      .jump-index {
+        padding: 15px;
+      }
+
+      .jump-link {
+        grid-template-columns: 12px 30px minmax(0, 1fr);
+        font-size: 14px;
+      }
+
+      .toc-chapter ul {
+        margin-left: 48px;
+      }
+
+      .article h1 {
+        align-items: flex-start;
+        font-size: 22px;
+      }
+
+      th,
+      td {
+        padding: 9px 10px;
+      }
+    }
+
+
+    .section-links-block {
+      margin-top: 32px;
+    }
+    .section-links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .section-link-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-elevated);
+      color: var(--text-soft);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.4;
+      transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+    }
+    .section-link-card:hover {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+    .section-link-no {
+      flex-shrink: 0;
+      display: inline-grid;
+      place-items: center;
+      width: 32px;
+      height: 28px;
+      border-radius: 4px;
+      background: var(--bg-soft);
+      color: var(--text-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .section-link-card:hover .section-link-no {
+      background: rgba(37, 99, 235, 0.1);
+      color: var(--blue);
+    }
+    .section-link-title {
+      flex: 1;
+      min-width: 0;
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#content">跳到正文</a>
+  <div class="progress" id="progress"></div>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">hr</span><span class="brand-text">Harness 工程下的 Multi-Agent 股票研究助手</span></div>
+      <div class="header-note">从基础 Agent 到完整 Harness 策略的渐进式迭代方案</div>
+      <button class="menu-button" type="button" id="openMenu" aria-controls="mobilePanel" aria-expanded="false">目录</button>
+    </div>
+  </header>
+  <aside class="mobile-panel" id="mobilePanel" aria-hidden="true">
+    <div class="mobile-head">
+      <strong>目录</strong>
+      <button class="mobile-close" type="button" id="closeMenu" aria-label="关闭目录">×</button>
+    </div>
+    <nav class="mobile-nav" id="mobileNav" aria-label="移动端章节目录"></nav>
+  </aside>
+  <div class="shell">
+    <aside class="sidebar" aria-label="章节目录">
+      <nav class="nav-list" id="sideNav"></nav>
+    </aside>
+    <main class="content" id="content">
+      <div class="article-shell">
+      <section class="overview" id="overview">
+        <header class="hero">
+        <p class="eyebrow">Harness Iteration Plan</p>
+        <h1>Harness 工程下的 Multi-Agent 股票研究助手</h1>
+        </header>
+        <div class="page-overview">
+          <div class="overview-title-row">
+            <h2>总览</h2>
+            <span class="overview-version">overview</span>
+          </div>
+          <p class="overview-subtitle">从工程实现视角，把多 Agent 金融研究系统拆成目标、机制选择、上下文约束和稳定性策略。</p>
+          <blockquote class="overview-quote">
+            <p><em>“Harness 不是外壳，而是让 Agent 长流程可控的工程骨架。”</em></p>
+          </blockquote>
+        </div>
+        <div class="overview-sections">
+          <section class="overview-block" aria-labelledby="what-title">
+            <h3 id="what-title">这是什么</h3>
+            <p>这是一份从基础 Agent Loop 出发的工程化迭代方案。它用一个 A 股研究报告系统串起 10 轮 Harness 迭代，展示如何把“能跑”的多 Agent Demo，逐步改造成可控、可扩展、可恢复、可交接上下文的系统规格。</p>
+          </section>
+          <section class="overview-block" aria-labelledby="insights-title">
+            <h3 id="insights-title">核心洞察</h3>
+            <ul class="insight-list">
+              <li>Harness 决定 Agent 能走多远：模型能力需要循环、工具、权限与状态系统承接。</li>
+              <li>多 Agent 协作需要显式的上下文隔离，不能让执行细节污染调度上下文。</li>
+              <li>工具不是越多越好，分发映射、沙箱、权限管线和 Hook 才让工具可控。</li>
+              <li>长流程可靠性来自规划、压缩、记忆、运行时 Prompt 与错误恢复的组合。</li>
+            </ul>
+          </section>
+          <section class="overview-map" aria-labelledby="map-title">
+            <h3 id="map-title">演进主线</h3>
+            <div class="mermaid-wrap">
+              <div class="diagram-title">Harness 迭代路线</div>
+              <div class="diagram-scroll">
+              <div class="mermaid">
+flowchart LR
+    V0["v0 基础 Agent<br/>Loop / Tools / Pipeline"] --> V1["v1 工具分发<br/>安全沙箱"]
+    V1 --> V2["v2 权限管线<br/>三道闸门"]
+    V2 --> V3["v3 Hooks<br/>扩展机制"]
+    V3 --> V4["v4 TodoManager<br/>规划与同步"]
+    V4 --> V5["v5 Skill<br/>按需知识加载"]
+    V5 --> V6["v6 Compact<br/>上下文压缩"]
+    V6 --> V7["v7 Memory<br/>跨会话记忆"]
+    V7 --> V8["v8 Prompt<br/>运行时组装"]
+    V8 --> V9["v9 Recovery<br/>错误恢复"]
+    V9 --> V10["v10 Subagent<br/>上下文隔离"]
+              </div>
+              </div>
+            </div>
+          </section>
+          <section class="jump-index-block" aria-labelledby="toc-title">
+            <h3 class="jump-index-title" id="toc-title">目录</h3>
+            <div class="jump-index">
+              <ol class="toc-grid" id="overviewToc"></ol>
+            </div>
+          </section>
+
+          <section class="section-links-block" aria-labelledby="links-title">
+            <h3 class="jump-index-title" id="links-title">章节导航</h3>
+            <div class="section-links-grid">
+              <a class="section-link-card" href="pages/00-background.html"><span class="section-link-no">00</span><span class="section-link-title">需求背景与问题定义</span></a>
+              <a class="section-link-card" href="pages/01-v0-baseline.html"><span class="section-link-no">01</span><span class="section-link-title">基础 Agent：多 Agent 协作的 Baseline（v0）</span></a>
+              <a class="section-link-card" href="pages/02-v1-tool-dispatch.html"><span class="section-link-no">02</span><span class="section-link-title">Harness 迭代 1：工具分发与安全沙箱（v1）</span></a>
+              <a class="section-link-card" href="pages/03-v2-permission.html"><span class="section-link-no">03</span><span class="section-link-title">Harness 迭代 2：权限管线（v2）</span></a>
+              <a class="section-link-card" href="pages/04-v3-hooks.html"><span class="section-link-no">04</span><span class="section-link-title">Harness 迭代 3：Hooks 扩展机制（v3）</span></a>
+              <a class="section-link-card" href="pages/05-v4-todo.html"><span class="section-link-no">05</span><span class="section-link-title">Harness 迭代 4：规划与待办管理（v4）</span></a>
+              <a class="section-link-card" href="pages/06-v5-skill.html"><span class="section-link-no">06</span><span class="section-link-title">Harness 迭代 5：Skill 按需知识加载（v5）</span></a>
+              <a class="section-link-card" href="pages/07-v6-compact.html"><span class="section-link-no">07</span><span class="section-link-title">Harness 迭代 6：上下文压缩（v6）</span></a>
+              <a class="section-link-card" href="pages/08-v7-memory.html"><span class="section-link-no">08</span><span class="section-link-title">Harness 迭代 7：记忆系统（v7）</span></a>
+              <a class="section-link-card" href="pages/09-v8-prompt.html"><span class="section-link-no">09</span><span class="section-link-title">Harness 迭代 8：System Prompt 运行时组装（v8）</span></a>
+              <a class="section-link-card" href="pages/10-v9-recovery.html"><span class="section-link-no">10</span><span class="section-link-title">Harness 迭代 9：错误恢复与韧性（v9）</span></a>
+              <a class="section-link-card" href="pages/11-v10-subagent.html"><span class="section-link-no">11</span><span class="section-link-title">Harness 迭代 10：子 Agent 与上下文隔离（v10）</span></a>
+              <a class="section-link-card" href="pages/12-appendix.html"><span class="section-link-no">附</span><span class="section-link-title">附录：完整 Harness 迭代全景图</span></a>
+            </div>
+          </section>
+
+        </div>
+      </section>
+      <article class="article" id="article"></article>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    window.__HARNESS_MARKDOWN__ = "# 需求背景与问题定义\n\n> **Model + Harness = Agent**\n>\n> 本方案以“Multi-Agent 股票研究助手”为主线，展示如何从基础多 Agent 系统出发，逐层叠加 Harness 策略，最终形成完整的 Harness 工程迭代方案。\n>\n> 每一轮迭代都会：指出上一轮的**可优化点** → 引入对应的 **Harness 策略** → 输出**迭代后的描述**。最终描述是所有迭代的累加。\n\n\n## 0.1 产品定位\n\n我们要构建一个**多 Agent 金融研究报告自动生成系统**——用户输入一个 A 股股票代码（如 `600519`），系统自动完成数据采集、舆情分析、市场分析、报告撰写、合规审查，最终输出结构化的投资研究报告（PDF / Markdown / JSON）。\n\n系统采用 **Pipeline + Fan-out 并行编排**模式：\n- **Stage 1（Fan-out 并行）**：Data Collector 和 Sentiment Agent 同时执行，分别采集财务数据和舆情数据\n- **Stage 2（Pipeline 串行）**：Market Analyst 等待 Stage 1 完成后综合分析\n- **Stage 3（Pipeline 串行）**：Report Writer 生成结构化报告\n- **Stage 4（Pipeline 串行）**：Compliance Agent 审查合规性\n\n\n## 0.2 核心用户故事\n\n| 角色 | 我想要 | 以便 |\n|------|--------|------|\n| 投资分析师 | 输入股票代码，让系统自动生成投资研究报告 | 节省手动检索、整理、分析的时间（人工需 4-6 小时，系统约 3 分钟） |\n| 投资分析师 | 系统自动从多个数据源采集数据 | 无需逐一访问 AKShare、新闻网站、公告披露平台 |\n| 合规审核员 | 报告生成后自动进行合规审查 | 确保报告符合监管要求，降低合规风险 |\n| 技术负责人 | 系统支持灵活扩展新的分析维度（如新增行业分析、ESG 评估），无需停机或重新部署 | 降低维护成本，支持业务快速迭代 |\n\n\n## 0.3 Agent 能力边界\n\n- **能做的事**：\n  - 从 AKShare 采集 A 股行情、财务指标、公告摘要\n  - 从 Tavily 搜索并分析财经新闻的情感倾向\n  - 计算技术指标（RSI、MA、波动率）并综合分析市场趋势\n  - 自动生成包含 7 个章节的结构化投资研究报告\n  - 自动审查报告合规性（免责声明、数据引用、监管合规、偏见检查）\n  - 输出 PDF / Markdown / JSON 三种格式\n- **不能做的事**：\n  - 代替人类做最终投资决策\n  - 实时交易或执行资金操作\n  - 访问付费数据库（如 Bloomberg Terminal）\n- **不采用的技术方案**：\n  - **不使用 RAG**：本系统的数据源（AKShare、Tavily）是结构化 API，无需向量检索；直接调用 API + LLM 分析比 RAG 管线更轻量\n  - **不使用现有 Agent 框架**（LangChain / CrewAI）：本方案聚焦 Harness 工程化控制层的设计原理，使用框架会掩盖核心机制；生产环境可按需引入\n\n\n## 0.4 输入/输出契约\n\n| 项目 | 说明 |\n|------|------|\n| 输入 | 股票代码（必填，如 `600519`）、分析周期（可选，默认 `1y`）、报告语言（可选，默认 `zh`） |\n| 输出 | 在输出目录下生成 PDF + Markdown + JSON 三种格式的投资研究报告 |\n| 数据模型 | Pydantic v2 强制 JSON Schema，确保 Agent 间数据一致性 |\n\n## 0.5 度量指标\n\n| 维度 | 指标 | 目标值 | 度量方式 |\n|------|------|--------|---------|\n| **报告质量** | 合规审查通过率 | ≥ 90% | Compliance Agent 自动评分 |\n| **报告质量** | 人工评审综合评分 | ≥ 4.0 / 5.0 | 邀请投资分析师对报告打分 |\n| **效率** | 端到端耗时 | ≤ 3 分钟（对比人工 4-6 小时） | 从输入股票代码到输出报告的挂钟时间 |\n| **可靠性** | 任务完成率 | ≥ 95% | 成功生成完整报告的比例（不含超时/崩溃） |\n| **可靠性** | 重试率 | ≤ 10% | 工具调用触发重试的比例 |\n| **成本** | 单次报告 token 消耗 | ≤ 200K token | 记录所有 LLM 调用的累计 token 数 |\n| **成本** | 单次报告 API 调用次数 | ≤ 50 次 | 记录所有外部 API（AKShare / Tavily / LLM）调用次数 |\n\n\n## 0.6 迭代优先级\n\n并非所有 Harness 组件都需要在 MVP 阶段完成。以下按优先级分层：\n\n| 优先级 | 迭代 | 理由 |\n|--------|------|------|\n| **P0 — MVP 必须** | v0 基础 Agent、v1 工具沙箱、v2 权限管线、v4 规划管理 | 没有这些，系统无法安全运行或产出可靠报告 |\n| **P1 — 质量保障** | v3 Hooks、v5 Skill 加载、v6 上下文压缩、v9 错误恢复 | 提升报告质量和系统稳定性，支撑生产级使用 |\n| **P2 — 长期演进** | v7 记忆系统、v8 Prompt 组装、v10 子 Agent 隔离 | 优化长期用户体验和系统可维护性，可后置迭代 |\n\n\n# 基础 Agent：多 Agent 协作的 Baseline（v0）\n\n> 这是 Agent 的 Baseline 配置，仅包含 **Agent Loop、工具调用、任务规划** 三个基础模块。没有 Harness 工程加持，它是最朴素的形态。\n\n\n## 1.1 Agent Loop：持续运转的循环\n\n多 Agent 金融研究系统不是\"问一句答一句\"，而是一个持续运转的循环。与单 Agent 场景不同，这里需要**编排器（Orchestrator）**来调度和协调多个 Agent：\n\n```mermaid\nsequenceDiagram\n    participant U as 用户\n    participant O as Orchestrator\n    participant DC as Data Collector\n    participant SA as Sentiment Agent\n    participant MA as Market Analyst\n    participant RW as Report Writer\n    participant CA as Compliance Agent\n\n    U->>O: 提交股票代码\n    O->>O: 推理决策\n\n    Note over O: Stage 1: Fan-out 并行\n    par 并行执行\n        O->>DC: 指派数据采集\n        DC->>DC: 采集财务数据\n        DC-->>O: 返回 CollectedData\n    and\n        O->>SA: 指派舆情分析\n        SA->>SA: 搜索新闻 + LLM情感分析\n        SA-->>O: 返回 SentimentAnalysis\n    end\n\n    Note over O: Stage 2: Pipeline 串行\n    O->>MA: 指派市场分析<br/>(CollectedData + SentimentAnalysis)\n    MA->>MA: 计算技术指标 + LLM综合分析\n    MA-->>O: 返回 MarketAnalysis\n\n    Note over O: Stage 3: Pipeline 串行\n    O->>RW: 指派报告撰写<br/>(全部上游数据)\n    RW->>RW: LLM生成结构化报告\n    RW-->>O: 返回 InvestmentReport\n\n    Note over O: Stage 4: Pipeline 串行\n    O->>CA: 指派合规审查<br/>(InvestmentReport)\n    CA->>CA: LLM合规审查\n    CA-->>O: 返回 ComplianceReport\n\n    O->>O: 汇总 FinalReport\n    O-->>U: 输出报告 (PDF/Markdown/JSON)\n```\n\n**循环逻辑**：用户提交股票代码 → Orchestrator 调度 → Fan-out 并行执行 Data Collector + Sentiment Agent → Pipeline 串行执行 Market Analyst → Report Writer → Compliance Agent → 汇总输出 FinalReport。\n\n\n## 1.2 基础工具集\n\n5 个 Agent 共享基础工具集：\n\n| 工具 | 用途 | 金融研究场景示例 |\n|------|------|-----------------|\n| `bash` | 执行 shell 命令 | 检查输出目录是否存在 |\n| `read_file` | 读取文件内容 | 读取风格参考文档 |\n| `write_file` | 写入文件 | 将报告写入指定路径 |\n| `edit_file` | 编辑已有文件 | 修改报告中的某段分析 |\n| `web_search` | 联网搜索 | 搜索财经新闻、分析师评级 |\n\n**专用工具（封装在 Agent 内部）**：\n- `akshare_tool`：封装 AKShare API，采集 A 股行情、财务指标、公告摘要\n- `news_tool`：封装 Tavily API，搜索财经新闻\n\n\n## 1.3 数据模型：Pydantic v2 强制 JSON Schema\n\nAgent 之间的数据传递通过 Pydantic 模型约束，确保数据一致性。选择 Pydantic v2 的理由：\n\n- **类型安全**：运行时自动校验字段类型和约束，上游 Agent 输出字段缺失时立即报错而非静默传播\n- **JSON Schema 自动生成**：可直接用于 LLM 的 tool schema 定义，无需手写\n- **序列化一致性**：Agent 间通过 JSON 传递数据，Pydantic 保证序列化/反序列化的一致性\n- **错误可追溯**：校验失败时返回精确的字段级错误信息，便于调试\n\n```python\nclass StockQuery(BaseModel):\n    \"\"\"用户输入\"\"\"\n    ticker: str          # 股票代码，如 \"600519\"\n    period: str = \"1y\"   # 分析周期\n    language: str = \"zh\" # 报告语言\n\nclass CollectedData(BaseModel):\n    \"\"\"Data Collector 的输出\"\"\"\n    ticker: str\n    company_info: CompanyInfo\n    financial_metrics: FinancialMetrics\n    recent_prices: list[StockPrice]\n    disclosures: list[str]\n    data_sources: list[str]\n\nclass SentimentAnalysis(BaseModel):\n    \"\"\"Sentiment Agent 的输出\"\"\"\n    ticker: str\n    overall_sentiment: SentimentScore\n    sentiment_score: float\n    news_items: list[NewsItem]\n    key_topics: list[str]\n\nclass MarketAnalysis(BaseModel):\n    \"\"\"Market Analyst 的输出\"\"\"\n    ticker: str\n    trend_direction: str\n    technical_indicators: list[TechnicalIndicator]\n    risk_factors: list[RiskFactor]\n    recommendation: Recommendation\n\nclass InvestmentReport(BaseModel):\n    \"\"\"Report Writer 的输出\"\"\"\n    title: str\n    ticker: str\n    executive_summary: str\n    company_overview: str\n    # ... 7 个章节\n\nclass ComplianceReport(BaseModel):\n    \"\"\"Compliance Agent 的输出\"\"\"\n    is_compliant: bool\n    issues: list[ComplianceIssue]\n    compliance_score: float\n```\n\n\n## 1.4 规划能力：Pipeline + Fan-out 编排\n\n金融研究是典型的**多步骤、多 Agent 协作任务**。Orchestrator 通过 `asyncio.gather()` 实现 Fan-out 并行：\n\n```python\n# Stage 1: Fan-out 并行\nasync def generate_report(self, query: StockQuery) -> FinalReport:\n    collected_data, sentiment = await asyncio.gather(\n        self.data_collector.execute(query),   # Agent 1\n        self.sentiment_agent.execute(query),    # Agent 2\n    )\n\n    # Stage 2: Pipeline 串行（依赖 Stage 1 输出）\n    market_analysis = await self.market_analyst.execute(\n        collected_data, sentiment\n    )\n\n    # Stage 3: Pipeline 串行\n    report = await self.report_writer.execute(\n        collected_data, sentiment, market_analysis\n    )\n\n    # Stage 4: Pipeline 串行\n    compliance = await self.compliance_agent.execute(\n        report, collected_data\n    )\n\n    return FinalReport(\n        report=report,\n        compliance=compliance,\n        # ...\n    )\n```\n\n\n## 1.5 Baseline 配置描述（v0）\n\n> 以下描述可作为 UI 面向用户的配置面板呈现，也可作为面向 Coding Agent 的提示词。\n\n\n**【金融研究多 Agent 系统 v0 — Baseline 配置】**\n\n**身份**：你是一个多 Agent 金融研究报告自动生成系统，包含 5 个协作 Agent，根据用户输入的股票代码自动生成投资研究报告。\n\n**Agent 角色**：\n- **Data Collector**：从 AKShare 采集 A 股行情、财务指标、公告摘要\n- **Sentiment Agent**：从 Tavily 搜索财经新闻，使用 LLM 分析情感倾向\n- **Market Analyst**：计算技术指标（RSI、MA、波动率），使用 LLM 综合分析市场趋势\n- **Report Writer**：综合所有分析结果，生成包含 7 个章节的结构化投资报告\n- **Compliance Agent**：审查报告合规性，检查免责声明、数据引用、监管合规\n\n**工具**（所有 Agent 共享）：\n- `bash`：执行 shell 命令\n- `read_file`：读取文件内容\n- `write_file`：写入文件\n- `edit_file`：编辑文件\n- `web_search`：联网搜索\n\n**专用工具**（封装在 Agent 内部）：\n- `akshare_tool`：AKShare API 封装\n- `news_tool`：Tavily API 封装\n\n**编排模式**：Pipeline + Fan-out 并行\n1. Stage 1（Fan-out）：Data Collector + Sentiment Agent 并行执行\n2. Stage 2（Pipeline）：Market Analyst 等待 Stage 1 完成后综合分析\n3. Stage 3（Pipeline）：Report Writer 生成结构化报告\n4. Stage 4（Pipeline）：Compliance Agent 审查合规性\n\n**循环**：Orchestrator 调度 → Agent 执行 → 返回结果 → 直到所有 Stage 完成。\n\n\n## 1.6 v0 的架构示意\n\n```mermaid\nflowchart LR\n    User[\"用户输入<br/>股票代码\"] --> Orchestrator[\"Orchestrator<br/>编排器\"]\n    Orchestrator --> DC[\"Data Collector<br/>数据采集\"]\n    Orchestrator --> SA[\"Sentiment Agent<br/>舆情分析\"]\n    DC --> MA[\"Market Analyst<br/>市场分析\"]\n    SA --> MA\n    MA --> RW[\"Report Writer<br/>报告撰写\"]\n    RW --> CA[\"Compliance Agent<br/>合规审查\"]\n    CA --> Output[\"FinalReport<br/>PDF/Markdown/JSON\"]\n```\n\n# Harness 迭代 1：工具分发与安全沙箱（v1）\n\n## 2.1 可优化点\n\nv0 中工具调用是\"裸执行\"的——尤其是 `bash`，Agent 可以执行任何 shell 命令，包括 `rm -rf /`。`read_file`、`write_file` 虽然天然比 `bash cat` 更安全，但 v0 没有路径沙箱，Agent 可能读取或写入工作区外的敏感文件。\n\n在金融研究场景中，这个问题更加严重：\n- **Data Collector** 可能通过 `bash` 执行非预期命令，把采集到的敏感财务数据发送到外部服务器\n- **Report Writer** 可能通过 `write_file` 写入工作区外的系统目录\n- 工具调用的分发逻辑如果硬编码在 Orchestrator 里，每增加一个工具（如新增金融数据 API）就要修改编排代码\n\n## 2.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **工具分发映射** | 将工具名与处理函数的映射抽成独立字典（Dispatch Map），新增工具只需注册，不改 Orchestrator |\n| **路径沙箱** | 对 `read_file`、`write_file`、`edit_file` 做路径校验，确保只能访问工作区内的文件 |\n\n## 2.3 迭代后的描述（v1）\n\n**【金融研究多 Agent 系统 v1 — 工具分发与沙箱】**\n\n**（在 v0 基础上新增/变更）**\n\n**工具分发**：所有工具通过分发映射表注册。新增工具只需在映射表中添加一条，Orchestrator 不做任何修改。5 个 Agent 共享同一套 Dispatch Map，每个 Agent 可以按需注册自己的工具子集：\n- Data Collector：额外注册 `akshare_tool`、`news_tool`\n- Sentiment Agent：额外注册 `tavily_search`\n- Market Analyst：额外注册 `technical_indicator_calculator`\n\n**路径沙箱**：\n- `read_file`、`write_file`、`edit_file` 在执行前做路径安全校验\n- 只允许访问用户指定的输出目录及其子路径\n- 路径逃逸（如 `../../etc/passwd`）直接拒绝并返回错误信息\n- `bash` 暂无沙箱约束（将在下一轮迭代解决）\n\n**错误反馈**：路径校验失败时，返回清晰错误信息而非沉默失败，让 Agent 理解\"为什么被拒绝\"并调整行为。\n\n\n## 2.4 架构变化示意\n\n```mermaid\nsequenceDiagram\n    participant O as Orchestrator\n    participant DM as 分发映射表\n    participant DC as Data Collector\n    participant SA as Sentiment Agent\n    participant RW as Report Writer\n\n    O->>DM: 注册工具: bash, read_file, write_file, edit_file, web_search, akshare_tool, news_tool\n\n    O->>DC: 执行数据采集\n    DC->>DM: 查询 akshare_tool\n    DM->>DM: 路径沙箱校验\n    DM-->>DC: 执行结果/拒绝\n\n    O->>SA: 执行舆情分析\n    SA->>DM: 查询 news_tool\n    DM->>DM: 路径沙箱校验\n    DM-->>SA: 执行结果/拒绝\n\n    O->>RW: 执行报告写入\n    RW->>DM: 查询 write_file\n    DM->>DM: 路径沙箱校验 → 文件写入\n    DM-->>RW: 写入结果/拒绝\n\n    Note over DM: 新增工具只需注册到映射表，<br/>Orchestrator 代码零修改\n```\n\n# Harness 迭代 2：权限管线（v2）\n\n## 3.1 可优化点\n\nv1 对文件工具做了沙箱，但 `bash` 仍然不受约束。安全不能依赖模型的\"自律\"——模型不会主动执行恶意命令，但在复杂上下文中可能产生不恰当的操作（如误删文件、泄露数据）。\n\n在金融研究场景中，权限问题更加敏感：\n- **金融数据泄露风险**：Data Collector 可能通过 `bash curl` 将采集到的敏感财务数据外发到不可信服务器\n- **分级权限需求**：普通研究员只能读取公开数据，高级分析师可以访问内部数据库，合规审核员可以审计所有操作\n- **数据越界访问**：一个研究团队的数据不应被另一个团队看到\n\n此外，文件沙箱只做了\"全拒绝\"，没有\"需要用户确认\"的中间地带。比如写入输出目录外的文件，可能是有意为之（用户要求存到特定位置），应该让用户决定。\n\n## 3.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **三道闸门权限管线** | 工具执行前依次经过：硬拒绝 → 规则匹配 → 用户审批，通过后才执行 |\n| **硬拒绝列表** | 永远禁止的危险操作（`rm -rf /`、`sudo`、`mkfs` 等），命中即拒 |\n| **规则匹配** | 上下文相关的操作（写工作区外、`rm` 文件等），触发后交给用户审批 |\n| **用户审批** | 规则命中后暂停等用户确认，用户决定允许或拒绝 |\n\n## 3.3 迭代后的描述（v2）\n\n**【金融研究多 Agent 系统 v2 — 权限管线】**\n\n**（在 v1 基础上新增/变更）**\n\n**权限管线**：每个工具调用执行前，依次经过三道闸门：\n\n| 闸门 | 作用 | 命中后行为 |\n|------|------|-----------|\n| 1. 硬拒绝列表 | 永远禁止的危险操作 | 直接拒绝，不执行 |\n| 2. 规则匹配 | 取决于上下文的操作 | 交给闸门 3 |\n| 3. 用户审批 | 规则命中后暂停等确认 | 用户决定允许或拒绝 |\n\n三道都没命中 → 直接执行。大部分日常操作（读参考文档、搜索素材、写入输出目录）走这条路径，无需用户干预。\n\n**金融研究场景的典型规则**：\n- `bash` 中包含 `rm`、`sudo`、`curl` 向外部发送数据等关键词 → 触发闸门 2 → 用户审批（测试中约 15% 的 bash 调用会命中规则，大部分为误触发的 `rm` 临时文件清理）\n- `write_file` 写入输出目录外 → 触发闸门 2 → 用户审批\n- `read_file` 读取非工作区文件 → 触发闸门 2 → 用户审批\n- `web_search` 搜索涉及内幕信息的敏感查询 → 触发闸门 2 → 记录审计日志\n\n**循环变更**：v1 的循环在工具执行前新增一行权限检查。检查不通过则返回 `Permission denied` 作为工具结果，让 Agent 知道被拒绝的原因。\n\n\n## 3.4 权限管线流程\n\n```mermaid\nsequenceDiagram\n    participant REQ as 工具调用请求\n    participant G1 as 闸门1: 硬拒绝\n    participant G2 as 闸门2: 规则匹配\n    participant G3 as 闸门3: 用户审批\n    participant EXEC as 工具执行\n    participant AUDIT as 审计日志\n\n    REQ->>G1: 检查是否命中硬拒绝列表\n    alt 命中硬拒绝\n        G1-->>REQ: 直接拒绝\n    else 未命中\n        REQ->>G2: 检查是否命中规则\n        alt 命中规则\n            G2->>G3: 交给用户审批\n            alt 用户允许\n                G3->>EXEC: 执行工具\n                EXEC-->>AUDIT: 记录审计日志\n                AUDIT-->>REQ: 返回结果\n            else 用户拒绝\n                G3-->>REQ: 拒绝\n            end\n        else 未命中规则\n            G2->>EXEC: 直接执行工具\n            EXEC-->>AUDIT: 记录审计日志\n            AUDIT-->>REQ: 返回结果\n        end\n    end\n```\n\n# Harness 迭代 3：Hooks 扩展机制（v3）\n\n## 4.1 可优化点\n\nv2 把权限检查 `check_permission()` 硬编码在循环体里。如果未来还想加\"每次工具调用后自动记录日志\"、\"写入文件后自动做格式校验\"、\"每次搜索后记录搜索词用于素材溯源\"——每次扩展都要改循环代码。循环很快就会膨胀到不可维护。\n\n在金融研究场景中，Hook 的需求更加强烈：\n- **数据采集后自动校验**：Data Collector 获取财报数据后，需要自动校验数据格式是否符合 Pydantic Schema\n- **报告写入后自动备份**：InvestmentReport 生成后，需要自动备份到版本控制系统\n- **搜索关键词溯源**：每次 `web_search` / `tavily_search` 执行后，需要记录搜索关键词和结果摘要，用于后续审计\n- **敏感数据扫描**：任何写入操作前，需要扫描内容是否包含敏感信息（如未公开的并购信息）\n\n循环应该是稳定的核心，扩展逻辑应该挂在外面。\n\n## 4.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **Hooks 注册表** | 把扩展逻辑从循环体移到钩子回调，循环只调用 `trigger_hooks()` |\n| **四个 Hook 事件** | 覆盖一个完整的 Agent Cycle：输入提交前、工具执行前、工具执行后、循环退出前 |\n| **权限检查迁移** | v2 的 `check_permission()` 从循环移到 `PreToolUse` hook |\n\n**四个事件**：\n\n| 事件 | 触发时机 | 金融研究场景用途 |\n|------|---------|---------------|\n| `UserPromptSubmit` | 用户输入提交后、进入 LLM 前 | 注入当前股票代码的行业背景信息 |\n| `PreToolUse` | 工具执行前 | 权限检查、敏感数据扫描 |\n| `PostToolUse` | 工具执行后 | 数据校验、素材溯源记录、自动备份 |\n| `Stop` | 循环即将退出时 | 输出研究统计（搜索次数、数据源数量、总耗时） |\n\n## 4.3 迭代后的描述（v3）\n\n**【金融研究多 Agent 系统 v3 — Hooks 扩展机制】**\n\n**（在 v2 基础上新增/变更）**\n\n**Hooks 机制**：循环中不再直接调用权限检查函数，改为调用 `trigger_hooks(事件名, 参数)`，由注册表决定执行哪些回调。\n\n**已注册的 Hooks**：\n\n| 事件 | 回调 | 作用 |\n|------|------|------|\n| `UserPromptSubmit` | `context_inject_hook` | 注入当前股票代码的行业背景信息 |\n| `PreToolUse` | `permission_hook` | 三道闸门权限检查（v2 的逻辑，从循环移到 hook） |\n| `PreToolUse` | `sensitive_scan_hook` | 扫描工具输入是否包含敏感关键词 |\n| `PreToolUse` | `log_hook` | 记录每次工具调用日志 |\n| `PostToolUse` | `data_validation_hook` | `akshare_tool` / `news_tool` 执行后校验返回数据是否符合 Pydantic Schema |\n| `PostToolUse` | `source_trace_hook` | `tavily_search` 执行后记录搜索词和结果摘要，用于素材溯源 |\n| `PostToolUse` | `auto_backup_hook` | `write_file` 执行后自动备份报告到版本控制 |\n| `PostToolUse` | `large_output_hook` | 工具返回内容过大时提醒 |\n| `Stop` | `research_summary_hook` | 输出研究统计（工具调用次数、数据源数量、总耗时） |\n\n**循环变更**：v2 的 `check_permission(block)` 替换为 `trigger_hooks(\"PreToolUse\", block)`；工具执行后新增 `trigger_hooks(\"PostToolUse\", block, output)`；退出前新增 `trigger_hooks(\"Stop\", messages)`（可阻止退出实现强制续跑）。\n\n**扩展方式**：未来任何新扩展（如接入新的金融数据 API）只需 `register_hook(\"PostToolUse\", callback)` 即可，循环代码零修改。\n\n\n## 4.4 Hooks 在 Agent Cycle 中的位置\n\n```mermaid\nsequenceDiagram\n    participant U as 用户\n    participant O as Orchestrator\n    participant H as Hooks 注册表\n    participant DC as Data Collector\n    participant SA as Sentiment Agent\n    participant T as 工具\n\n    U->>O: 提交股票代码\n    O->>H: trigger_hooks(UserPromptSubmit)\n    H-->>O: 注入行业背景信息\n\n    O->>DC: 指派数据采集\n    DC->>H: trigger_hooks(PreToolUse)\n    H-->>DC: 权限检查结果 + 敏感扫描结果\n    alt 权限通过\n        DC->>T: 执行 akshare_tool\n        T-->>DC: 财务数据\n        DC->>H: trigger_hooks(PostToolUse)\n        H-->>DC: Pydantic Schema 校验 + 溯源记录\n    else 权限拒绝\n        DC-->>DC: 记录 Permission denied\n    end\n    DC-->>O: 返回 CollectedData\n\n    O->>SA: 指派舆情分析\n    SA->>H: trigger_hooks(PreToolUse)\n    H-->>SA: 权限检查结果\n    SA->>T: 执行 tavily_search\n    T-->>SA: 新闻数据\n    SA->>H: trigger_hooks(PostToolUse)\n    H-->>SA: 溯源记录 + 大文件提醒\n    SA-->>O: 返回 SentimentAnalysis\n\n    O->>H: trigger_hooks(Stop)\n    H-->>O: 输出研究统计\n    O-->>U: 输出 FinalReport\n```\n\n# Harness 迭代 4：规划与待办管理（v4）\n\n## 5.1 可优化点\n\nv0 虽然提到了任务分解，但只是简单描述。实际上，金融研究是一个典型的多步骤、多 Agent 协作任务——数据采集、舆情分析、市场分析、报告撰写、合规审查——步骤之间有依赖，且容易跑偏：\n\n- **多 Agent 场景下的状态同步问题**：Data Collector 完成了\"茅台财报\"的采集，但 Market Analyst 不知道，还在等待\n- **任务依赖管理缺失**：Market Analyst 必须等 Data Collector 和 Sentiment Agent 都完成后才能开始，但系统没有显式表达这种依赖\n- **Agent 任务偏离**：Data Collector 采集了 20 份财报后，丢失了最初的研究目标上下文\n- **任务进度不透明**：用户不知道研究进行到哪一步了，是正在采集数据还是正在撰写报告\n\n**缺乏显式规划的 Agent 在长流程中容易丢失目标。在多 Agent 场景下，这个问题会被放大——一个 Agent 的目标偏移会传导到整个协作链。**\n\n## 5.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **TodoManager 状态管理** | 待办项有三种状态：`pending`、`in_progress`、`completed`；同一时间只允许一个 `in_progress`，强制顺序聚焦 |\n| **Nag Reminder** | Agent 连续 3 轮以上不更新待办时，系统自动注入提醒 `<reminder>Update your todos.</reminder>`，制造问责压力 |\n| **跨 Agent 待办同步** | Orchestrator 维护全局待办列表，子 Agent 通过 Hook 机制同步自己的进度 |\n| **金融研究规划模板** | 为金融研究任务提供默认的待办结构，避免 Agent 从零规划 |\n\n## 5.3 迭代后的描述（v4）\n\n**【金融研究多 Agent 系统 v4 — 规划与待办管理】**\n\n**（在 v3 基础上新增/变更）**\n\n**TodoManager**：\n- 待办项有 `pending`、`in_progress`、`completed` 三种状态\n- 同一时间只允许一个 `in_progress`（强制聚焦，防止多 Agent 同时争抢同一任务）\n- `todo_write` 工具作为分发映射表中的又一工具，与其他工具平级\n- **新增：跨 Agent 状态同步**——每个 Agent 完成自己的子任务后，通过 `todo_write` 更新全局状态\n\n**Nag Reminder**：Agent 连续 3 轮未调用 `todo_write` 时，系统在最近一条工具结果前注入提醒，强制 Agent 回顾计划。阈值设为 3 轮是因为：Agent 执行单个子任务（如采集一份财报）通常需要 1-2 轮工具调用，3 轮未更新说明可能已偏离任务。该阈值可通过配置调整。\n\n**金融研究默认规划模板**（Orchestrator 收到任务后可参考此模板生成待办）：\n\n| 序号 | 步骤 | 负责 Agent | 依赖 | 说明 |\n|------|------|-----------|------|------|\n| 1 | 采集公司信息 | Data Collector | — | 从 AKShare 获取公司基本信息 |\n| 2 | 采集财务指标 | Data Collector | — | 获取营收、利润、PE/PB 等核心指标 |\n| 3 | 采集股价历史 | Data Collector | — | 获取最近 N 个交易日的价格数据 |\n| 4 | 采集公告摘要 | Data Collector | — | 获取最近公告和监管披露 |\n| 5 | 搜索财经新闻 | Sentiment Agent | — | 从 Tavily 搜索相关新闻 |\n| 6 | 舆情情感分析 | Sentiment Agent | 步骤 5 | LLM 分析新闻情感倾向 |\n| 7 | 计算技术指标 | Market Analyst | 步骤 3 | RSI、MA、波动率等纯数学计算 |\n| 8 | 综合市场分析 | Market Analyst | 步骤 2, 6, 7 | LLM 综合分析，给出投资建议 |\n| 9 | 撰写报告 | Report Writer | 步骤 1-8 | 生成 7 章节的结构化报告 |\n| 10 | 合规审查 | Compliance Agent | 步骤 9 | 检查免责声明、数据引用、监管合规 |\n\n**跨 Agent 同步机制**：\n- Orchestrator 维护全局待办列表（Master Todo）\n- 子 Agent 执行完自己的任务后，调用 `todo_write` 更新全局状态\n- Orchestrator 通过 `PostToolUse` Hook 监听子 Agent 的进度更新\n\n**循环变更**：新增 `rounds_since_todo` 计数器，每轮工具执行后递增，调用 `todo_write` 时重置为 0。多 Agent 场景下，每个 Agent 独立计数。\n\n\n## 5.4 待办管理在多 Agent 流程中的时序\n\n```mermaid\nsequenceDiagram\n    participant U as 用户\n    participant O as Orchestrator\n    participant TM as TodoManager (全局)\n    participant DC as Data Collector\n    participant SA as Sentiment Agent\n    participant MA as Market Analyst\n\n    U->>O: 提交股票代码\n    O->>TM: 创建全局待办: [采集信息, 舆情分析, 市场分析, 报告撰写, 合规审查]\n    TM-->>O: 待办列表已创建\n\n    Note over O: Stage 1: Fan-out 并行\n    O->>TM: 标记\"采集信息\" → in_progress, \"舆情分析\" → in_progress\n    \n    par 并行执行\n        O->>DC: 指派数据采集\n        DC->>DC: 执行 akshare_tool\n        DC->>TM: 标记\"采集信息\" → completed\n        DC-->>O: 返回 CollectedData\n    and\n        O->>SA: 指派舆情分析\n        SA->>SA: 执行 tavily_search + LLM分析\n        SA->>TM: 标记\"舆情分析\" → completed\n        SA-->>O: 返回 SentimentAnalysis\n    end\n\n    O->>TM: 标记\"市场分析\" → in_progress\n    O->>MA: 指派市场分析 (CollectedData + SentimentAnalysis)\n    MA->>MA: 计算技术指标 + LLM综合分析\n    MA->>TM: 标记\"市场分析\" → completed\n    MA-->>O: 返回 MarketAnalysis\n\n    Note over O: Stage 3-4: 报告撰写 + 合规审查 (略)\n\n    O->>TM: 所有步骤 → completed\n    O-->>U: 输出 FinalReport\n```\n\n# Harness 迭代 5：Skill 按需知识加载（v5）\n\n## 6.1 可优化点\n\n金融研究 Agent 需要多种领域知识：财报结构解析、行业术语解释、估值模型方法、不同行业的分析框架、A 股监管合规要求……全塞进 System Prompt 太浪费——10 个 Skill 每个 2000 token 就是 20000 token，大部分跟当前研究任务毫无关系。\n\n在金融研究场景中，这个问题更加突出：\n- **行业知识差异大**：分析茅台（白酒行业）和分析宁德时代（新能源行业）需要的专业知识完全不同\n- **分析框架多样**：DCF 估值、PE 估值、EV/EBITDA 等不同估值模型适用于不同场景\n- **合规要求不同**：不同行业的研究报告有不同的合规披露要求\n- **报告模板各异**：卖方研报、买方研报、内部备忘录的格式和深度要求不同\n\n如果把这些知识全塞进 System Prompt，不仅浪费 token，还会干扰 Agent 的推理——不相关的行业知识会让 Agent 在分析时产生混淆。\n\n## 6.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **两层知识注入** | 第一层：System Prompt 中只放 Skill 名称和简短描述（低成本）；第二层：Agent 按需调用 `load_skill` 加载完整内容 |\n| **Skill 文件组织** | 每个 Skill 是一个目录，包含 `SKILL.md` 文件（YAML frontmatter + 完整指令） |\n| **金融研究专用 Skill 库** | 预置金融研究领域的常用 Skill |\n\n## 6.3 迭代后的描述（v5）\n\n**【金融研究多 Agent 系统 v5 — Skill 按需加载】**\n\n**（在 v4 基础上新增/变更）**\n\n**工具新增**：`load_skill`——按名称加载某个 Skill 的完整指令内容。\n\n**Skill 库（预置）**：\n\n| Skill 名称 | 描述 | 典型场景 |\n|------------|------|---------|\n| `financial-statement-analysis` | 财报结构与关键指标分析：收入表、资产负债表、现金流量表 | Data Collector 解析财报 |\n| `valuation-models` | 估值模型：DCF、PE、EV/EBITDA、DDM 等方法论 | Market Analyst 估值分析 |\n| `industry-research` | 行业研究方法：产业链分析、竞争格局、市场规模 | Market Analyst 行业深度研究 |\n| `research-report-writing` | 研究报告写作规范：结构、措辞、合规要求 | Report Writer 撰写卖方/买方研报 |\n| `macro-economics` | 宏观经济分析：GDP、通胀、利率、政策影响 | Market Analyst 宏观环境分析 |\n| `risk-assessment` | 风险评估框架：财务风险、经营风险、市场风险 | Market Analyst 风险提示章节 |\n| `a-share-compliance` | A 股合规要求：免责声明、数据引用、监管合规 | Compliance Agent 合规审查 |\n| `technical-analysis` | 技术分析方法：RSI、MA、MACD、KDJ 等 | Market Analyst 计算技术指标 |\n\n**两层注入**：\n- **第一层（常驻）**：System Prompt 中列出所有可用 Skill 的名称和一句话描述，约 100 token/Skill\n- **第二层（按需）**：Agent 判断当前任务需要某个 Skill 时，调用 `load_skill(\"financial-statement-analysis\")`，完整指令作为 `tool_result` 注入，约 2000 token\n\n**金融研究流程集成**：\n1. Orchestrator 收到研究任务后，先分析股票代码所属行业\n2. 根据行业判断需要加载哪些 Skill（如茅台 → 白酒行业 + DCF 估值）\n3. Data Collector 加载 `financial-statement-analysis` Skill，按规范解析财报\n4. Market Analyst 加载 `valuation-models` 和 `technical-analysis` Skill，选择合适的估值方法\n5. Report Writer 加载 `research-report-writing` Skill，按模板组织报告\n6. Compliance Agent 加载 `a-share-compliance` Skill，按 A 股合规要求审查\n\n\n## 6.4 Skill 加载时序\n\n```mermaid\nsequenceDiagram\n    participant SP as System Prompt\n    participant O as Orchestrator\n    participant DC as Data Collector\n    participant MA as Market Analyst\n    participant CA as Compliance Agent\n    participant SL as SkillLoader\n\n    Note over SP: 第一层: Skill 名称列表<br/>- financial-statement-analysis: 财报分析<br/>- valuation-models: 估值模型<br/>- technical-analysis: 技术分析<br/>- a-share-compliance: A股合规<br/>...（约 800 token）\n\n    O->>O: 分析股票代码 → 600519 (茅台)\n    O->>SL: load_skill(\"industry-research\")\n    SL-->>O: 白酒行业研究方法完整指令\n    O->>O: 确定需要白酒行业分析框架\n\n    O->>DC: 指派采集任务 + 加载 Skill 建议\n    DC->>SL: load_skill(\"financial-statement-analysis\")\n    SL-->>DC: 财报分析完整指令（收入表/资产负债表/现金流量表）\n    DC->>DC: 按 Skill 指令采集并解析财报\n    DC-->>O: 返回 CollectedData\n\n    O->>MA: 指派市场分析 + 财务数据\n    MA->>SL: load_skill(\"valuation-models\")\n    SL-->>MA: DCF 估值方法论完整指令\n    MA->>SL: load_skill(\"technical-analysis\")\n    SL-->>MA: RSI/MA/MACD 技术方法完整指令\n    MA->>MA: 按 Skill 指令分析\n    MA-->>O: 返回 MarketAnalysis\n\n    O->>CA: 指派合规审查 + 报告\n    CA->>SL: load_skill(\"a-share-compliance\")\n    SL-->>CA: A 股合规要求完整指令\n    CA->>CA: 按 Skill 指令审查\n    CA-->>O: 返回 ComplianceReport\n```\n\n# Harness 迭代 6：上下文压缩（v6）\n\n## 7.1 可优化点\n\n上下文窗口是有限的。Data Collector 读取一份 1000 行的财报就吃掉 ~4000 token；采集 10 份财报、搜索 20 条新闻、执行 30 次工具调用，轻松突破 100k token。\n\n在金融研究场景中，这个问题更加严重：\n- **Data Collector 读了 20 份财报后上下文溢出**：Agent 忘了最初的研究主题，开始重复采集\n- **Market Analyst 被大量原始数据淹没**：上下文里塞满了财报原文和新闻全文，挤占了分析推理的空间\n- **多 Agent 协作时的上下文冗余**：Orchestrator 的上下文里同时保留了多个 Agent 的详细执行记录，信息噪音大\n- **Report Writer 生成超长报告时截断**：一份完整的研报可能超过 8000 token，导致输出被截断\n\n**不压缩，Agent 根本没法处理大规模金融数据。**\n\n## 7.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **三层压缩策略** | 激进程度递增：micro compact → auto compact → manual compact |\n| **Micro Compact** | 静默替换：将旧的 tool result 替换为占位符（如\"[Previous: used akshare_tool]\"） |\n| **Auto Compact** | 阈值触发：token 超过阈值时，保存完整对话到磁盘，LLM 生成摘要后替换 |\n| **Manual Compact** | 按需触发：Agent 显式调用 `compact` 工具触发同样的摘要机制 |\n\n## 7.3 迭代后的描述（v6）\n\n**【金融研究多 Agent 系统 v6 — 上下文压缩】**\n\n**（在 v5 基础上新增/变更）**\n\n**三层压缩策略**：\n\n| 层级 | 触发条件 | 行为 | 金融研究场景示例 |\n|------|---------|------|---------------|\n| Layer 1: micro_compact | 每轮自动执行 | 替换超过 3 轮的 tool result 为占位符 | \"[Previous: 已采集茅台 Q2 财报]\" |\n| Layer 2: auto_compact | token > 上下文窗口的 60%（默认 50000，可配置） | 保存完整对话到 .transcripts/，LLM 生成摘要后替换 | 采集了 10 份财报后自动触发 |\n| Layer 3: manual_compact | Agent 显式调用 `compact` | 同上，但由 Agent 主动触发 | 信息采集完成后，Agent 主动压缩上下文 |\n\n**多 Agent 场景的压缩策略**：\n- **Data Collector 的上下文**：以原始数据为主，micro compact 频繁触发，保留最近 3 轮的工具结果\n- **Sentiment Agent 的上下文**：以新闻原文和情感分析为主，auto compact 在新闻数量过多时触发\n- **Market Analyst 的上下文**：以分析结论为主，保留关键技术指标和分析摘要\n- **Report Writer 的上下文**：以报告草稿为主，auto compact 在报告过长时触发\n- **Orchestrator 的上下文**：以任务调度和协调决策为主，保留全局状态摘要而非详细执行记录\n\n**完整历史保留**：所有完整对话通过 transcript 保存在磁盘上。信息没有真正丢失，只是移出了活跃上下文。需要时可以回溯查看。\n\n\n## 7.4 上下文压缩在多 Agent 流程中的位置\n\n```mermaid\nsequenceDiagram\n    participant O as Orchestrator\n    participant DC as Data Collector\n    participant SA as Sentiment Agent\n    participant LLM as LLM API\n    participant TS as .transcripts/\n\n    Note over O: Orchestrator 上下文<br/>- 任务状态摘要<br/>- 子 Agent 进度摘要\n\n    O->>DC: 指派采集任务\n    loop Data Collector 采集循环\n        DC->>LLM: 请求 (含多轮 tool result)\n        LLM-->>DC: 响应\n        Note over DC: Layer 1: micro_compact<br/>替换旧 tool result 为占位符\n        DC->>DC: 执行 akshare_tool / read_file\n        Note over DC: token > 阈值 ?\n        alt 是\n            DC->>TS: 保存完整对话\n            DC->>LLM: 请求生成摘要\n            LLM-->>DC: 返回摘要\n            DC->>DC: 替换 messages 为 [摘要]\n        end\n    end\n    DC-->>O: 返回 CollectedData 摘要\n\n    O->>SA: 指派舆情分析\n    loop Sentiment Agent 分析循环\n        SA->>LLM: 请求 (含多轮 tool result)\n        LLM-->>SA: 响应\n        Note over SA: Layer 1: micro_compact<br/>替换旧 tool result 为占位符\n        SA->>SA: 执行 tavily_search / LLM分析\n    end\n    SA-->>O: 返回 SentimentAnalysis 摘要\n```\n\n# Harness 迭代 7：记忆系统（v7）\n\n## 8.1 可优化点\n\nv6 的 auto_compact 会把当前目标、剩余工作、用户约束写进摘要，但**细节会丢失**：\"用户关注毛利率变化而非收入增长\"可能被简化成\"用户有关键指标偏好\"。而且**新开一个会话，连摘要也没了**。\n\n在金融研究场景中，记忆丢失的问题更加严重：\n- **用户偏好丢失**：用户上次说\"我关注毛利率和现金流，不要给我看收入增长\"，下次会话 Agent 忘了，又按默认模板生成报告\n- **研究历史丢失**：用户上周研究了茅台，本周继续研究时 Agent 不记得之前的研究结论\n- **风格偏好丢失**：用户习惯看特定格式的数据表格，每次都要重新说明\n- **机构合规要求丢失**：不同机构对研究报告的合规披露要求不同，需要跨会话保留\n\nLLM 没有持久状态，所有信息都在上下文窗口里。上下文满了要压缩，压缩就有损。需要一层不参与压缩、跨会话保留的存储。\n\n## 8.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **文件仓库 + 索引** | `.memory/` 目录下，每个记忆一个 `.md` 文件，带 YAML frontmatter；`MEMORY.md` 作为索引 |\n| **两条加载路径** | 路径一：索引常驻 SYSTEM prompt（可被 prompt cache 缓存）；路径二：相关记忆按需注入（按名称/描述匹配） |\n| **自动提取** | 每轮结束后后台提取新记忆（用户偏好、研究结论、风格偏好等） |\n| **定期整理** | 记忆文件积累到一定数量后，LLM 去重、合并矛盾、淘汰过时记忆 |\n\n## 8.3 迭代后的描述（v7）\n\n**【金融研究多 Agent 系统 v7 — 记忆系统】**\n\n**（在 v6 基础上新增/变更）**\n\n**四类记忆**：\n\n| 类型 | 回答什么 | 金融研究场景示例 |\n|------|---------|---------------|\n| `user` | 用户偏好 | \"关注毛利率和现金流，不要看收入增长\" |\n| `feedback` | 研究反馈 | \"上次茅台分析缺少竞争对手对比\" |\n| `project` | 研究背景 | \"当前研究覆盖 2024 Q1-Q2 的白酒行业\" |\n| `reference` | 数据源 | \"茅台财报数据源：AKShare\" |\n\n**加载路径一：索引常驻 SYSTEM**\n\n`build_system()` 每轮重建 SYSTEM 时读取 `MEMORY.md`，把记忆清单注入。SYSTEM prompt 中的索引可以被 prompt cache 缓存。\n\n```markdown\n# MEMORY.md\n- [user-preference-metrics](user-preference-metrics.md) — 用户关注毛利率和现金流\n- [feedback-maotai-comparison](feedback-maotai-comparison.md) — 上次分析缺少竞争对手对比\n- [project-baijiu-2024](project-baijiu-2024.md) — 2024 年白酒行业研究项目\n- [reference-akshare](reference-akshare.md) — AKShare 财报数据源\n```\n\n**加载路径二：相关记忆按需注入**\n\n每轮调用前，`load_memories()` 把最近对话和记忆目录（name + description）一起发给 LLM 做一次轻量 side-query，选出相关记忆，再读取内容注入上下文。最多 5 条，控制开销。\n\n**写入：每轮结束后提取**\n\n`extract_memories()` 在每轮结束时运行，条件是模型停止且没有 tool_use（说明对话告一段落）。提取 prompt 要求 LLM 返回 `{name, type, description, body}` 的 JSON 数组。\n\n\n## 8.4 记忆系统在多 Agent 流程中的位置\n\n```mermaid\nsequenceDiagram\n    participant U as 用户\n    participant O as Orchestrator\n    participant SP as System Prompt (含记忆索引)\n    participant MEM as .memory/\n    participant DC as Data Collector\n    participant MA as Market Analyst\n\n    Note over MEM: MEMORY.md 索引<br/>- user-preference-metrics<br/>- feedback-maotai-comparison<br/>- project-baijiu-2024<br/>- reference-akshare\n\n    U->>O: 提交股票代码\n    O->>SP: 重建 System Prompt<br/>(含记忆索引)\n    O->>MEM: load_memories(\"茅台\")\n    MEM-->>O: 返回相关记忆:<br/>user-preference-metrics<br/>project-baijiu-2024\n\n    O->>DC: 指派采集任务 + 用户偏好记忆\n    Note over DC: 注入记忆:<br/>\"用户关注毛利率和现金流\"\n    DC->>DC: 按偏好采集数据\n    DC-->>O: 返回 CollectedData\n\n    O->>MA: 指派市场分析 + 数据 + 记忆\n    Note over MA: 注入记忆:<br/>\"上次分析缺少竞争对手对比\"\n    MA->>MA: 按偏好和反馈分析\n    MA-->>O: 返回 MarketAnalysis\n\n    O->>MEM: extract_memories()<br/>提取新记忆\n    MEM->>MEM: 写入新记忆文件<br/>consolidate_memories()\n    Note over MEM: 记忆积累，定期整理去重\n```\n\n# Harness 迭代 8：System Prompt 运行时组装（v8）\n\n## 9.1 可优化点\n\n从 v0 到 v7，System Prompt 都是一行硬编码：\n\n```python\nSYSTEM = \"你是一个多 Agent 金融研究报告自动生成系统的 Orchestrator...\"\n```\n\nv7 够用，只有基础工具定义。但到 v7，Agent 已经有记忆、有压缩、有技能加载、有权限管线。System Prompt 该提的能力越来越多：\n\n```python\nSYSTEM = (\n    \"你是一个多 Agent 金融研究报告自动生成系统的 Orchestrator...\"\n    \"可用工具：bash, read_file, write_file, edit_file, web_search, akshare_tool, news_tool...\"\n    \"权限管线：三道闸门...\"\n    \"Hooks 机制：四个事件...\"\n    \"记忆系统：四类记忆...\"\n    # ... 加一个能力就多一段\n)\n```\n\n在金融研究多 Agent 场景中，这个问题更加复杂：\n- **5 个 Agent 需要不同的 System Prompt**：Data Collector 需要强调\"数据准确性\"和\"来源追溯\"，Report Writer 需要强调\"分析深度\"和\"合规措辞\"\n- **换项目要重写整个 prompt**：从\"茅台分析\"切换到\"宁德时代分析\"，需要替换行业背景、调整分析框架\n- **修改一处可能影响全局**：给 Data Collector 加一段工具描述，可能跟 Report Writer 的指令冲突\n- **每次请求都带全部内容**：即使当前对话用不到某些段落也浪费 token\n\nSystem Prompt 应该是运行时根据当前状态组装的配置：哪些工具启用、哪些上下文可见、哪些记忆相关、哪些内容必须保持稳定以命中 prompt cache。\n\n## 9.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **PROMPT_SECTIONS 分段定义** | 把硬编码的 `SYSTEM` 拆成独立段落（section），每个 key 是一个主题 |\n| **assemble_system_prompt 按需拼接** | 根据当前运行态的真实状态（工具是否存在、文件是否存在、Agent 角色是什么）决定加载哪些 section |\n| **get_system_prompt 缓存** | 上下文没变时（同一轮对话的多次 LLM 调用），重新拼接是浪费。用确定性序列化检测变化，命中缓存直接返回 |\n\n## 9.3 迭代后的描述（v8）\n\n**【金融研究多 Agent 系统 v8 — System Prompt 运行时组装】**\n\n**（在 v7 基础上新增/变更）**\n\n**PROMPT_SECTIONS：分段定义**\n\n把一大段字符串拆成字典，每个 key 是一个主题：\n\n```python\nPROMPT_SECTIONS = {\n    # 通用 section（所有 Agent 共享）\n    \"identity\": \"你是一个多 Agent 金融研究报告自动生成系统。\",\n    \"tools\": \"Available tools: bash, read_file, write_file, edit_file, web_search.\",\n    \"workspace\": f\"Working directory: {WORKDIR}\",\n    \n    # Data Collector 专属 section\n    \"collector_role\": \"你是一个数据采集 Agent，负责从 AKShare 采集 A 股行情、财务指标、公告摘要。\",\n    \"collector_focus\": \"重点关注：数据准确性、来源可追溯性、数据完整性。\",\n    \n    # Sentiment Agent 专属 section\n    \"sentiment_role\": \"你是一个舆情分析 Agent，负责从 Tavily 搜索财经新闻并分析情感倾向。\",\n    \"sentiment_focus\": \"重点关注：新闻时效性、情感准确性、关键话题提取。\",\n    \n    # Market Analyst 专属 section\n    \"analyst_role\": \"你是一个市场分析 Agent，负责计算技术指标并综合分析市场趋势。\",\n    \"analyst_focus\": \"重点关注：分析深度、逻辑清晰、投资建议合理性。\",\n    \n    # Report Writer 专属 section\n    \"writer_role\": \"你是一个报告撰写 Agent，负责生成结构化的投资研究报告。\",\n    \"writer_focus\": \"重点关注：报告结构、措辞专业、合规要求。\",\n    \n    # Compliance Agent 专属 section\n    \"compliance_role\": \"你是一个合规审查 Agent，负责检查报告是否符合监管要求。\",\n    \"compliance_focus\": \"重点关注：免责声明、数据引用、监管合规、偏见检查。\",\n    \n    # 按需加载 section\n    \"memory\": \"Relevant memories are injected below when available.\",\n    \"skills\": \"Skills available via load_skill. See list in memory.\",\n}\n```\n\n**assemble_system_prompt：按需拼接**\n\n不是所有 section 每次都需要。当前没有记忆文件，加载 memory section 只是浪费 token。\n\n```python\ndef assemble_system_prompt(agent_role: str, context: dict) -> str:\n    sections = []\n    \n    # 通用 section（始终加载）\n    sections.append(PROMPT_SECTIONS[\"identity\"])\n    sections.append(PROMPT_SECTIONS[\"tools\"])\n    sections.append(PROMPT_SECTIONS[\"workspace\"])\n    \n    # 按角色加载专属 section\n    if agent_role == \"collector\":\n        sections.append(PROMPT_SECTIONS[\"collector_role\"])\n        sections.append(PROMPT_SECTIONS[\"collector_focus\"])\n    elif agent_role == \"sentiment\":\n        sections.append(PROMPT_SECTIONS[\"sentiment_role\"])\n        sections.append(PROMPT_SECTIONS[\"sentiment_focus\"])\n    elif agent_role == \"analyst\":\n        sections.append(PROMPT_SECTIONS[\"analyst_role\"])\n        sections.append(PROMPT_SECTIONS[\"analyst_focus\"])\n    elif agent_role == \"writer\":\n        sections.append(PROMPT_SECTIONS[\"writer_role\"])\n        sections.append(PROMPT_SECTIONS[\"writer_focus\"])\n    elif agent_role == \"compliance\":\n        sections.append(PROMPT_SECTIONS[\"compliance_role\"])\n        sections.append(PROMPT_SECTIONS[\"compliance_focus\"])\n    \n    # 按需加载 — 基于真实状态\n    memories = context.get(\"memories\", \"\")\n    if memories:\n        sections.append(f\"Relevant memories:\\\n{memories}\")\n    \n    return \"\\\n\\\n\".join(sections)\n```\n\n**多 Agent 场景的角色切换**：\n\n| Agent 角色 | 加载的 section | 不加载的 section |\n|-----------|--------------|----------------|\n| Orchestrator | identity, tools, workspace, memory | 各 Agent 专属 section |\n| Data Collector | identity, tools, workspace, collector_role, collector_focus | analyst_role, writer_role 等 |\n| Sentiment Agent | identity, tools, workspace, sentiment_role, sentiment_focus | collector_role, analyst_role 等 |\n| Market Analyst | identity, tools, workspace, analyst_role, analyst_focus | collector_role, writer_role 等 |\n| Report Writer | identity, tools, workspace, writer_role, writer_focus | collector_role, analyst_role 等 |\n| Compliance Agent | identity, tools, workspace, compliance_role, compliance_focus | 其他 Agent 专属 section |\n\n**缓存机制**：\n\n```python\ndef get_system_prompt(agent_role: str, context: dict) -> str:\n    global _last_key, _last_prompt\n    key = json.dumps({\"role\": agent_role, \"context\": context}, sort_keys=True, default=str)\n    if key == _last_key and _last_prompt:\n        return _last_prompt\n    _last_key = key\n    _last_prompt = assemble_system_prompt(agent_role, context)\n    return _last_prompt\n```\n\n\n## 9.4 System Prompt 运行时组装架构\n\n```mermaid\nsequenceDiagram\n    participant O as Orchestrator\n    participant DC as Data Collector\n    participant MA as Market Analyst\n    participant CA as Compliance Agent\n    participant SP as PROMPT_SECTIONS\n    participant ASM as assemble_system_prompt\n    participant LLM as LLM API\n\n    Note over SP: PROMPT_SECTIONS 定义<br/>- identity (通用)<br/>- tools (通用)<br/>- workspace (通用)<br/>- collector_role (采集专属)<br/>- collector_focus (采集专属)<br/>- analyst_role (分析专属)<br/>- analyst_focus (分析专属)<br/>- writer_role (写作专属)<br/>- writer_focus (写作专属)<br/>- compliance_role (合规专属)<br/>- compliance_focus (合规专属)<br/>- memory (按需)<br/>- skills (按需)\n\n    O->>ASM: assemble(\"orchestrator\", context)\n    ASM->>SP: 加载 identity + tools + workspace + memory\n    SP-->>ASM: 返回拼接后的 Prompt\n    ASM-->>O: Orchestrator System Prompt\n    O->>LLM: 使用组装后的 Prompt 推理\n\n    O->>DC: 指派采集任务\n    DC->>ASM: assemble(\"collector\", context)\n    ASM->>SP: 加载 identity + tools + workspace<br/>+ collector_role + collector_focus<br/>+ memory + skills\n    SP-->>ASM: 返回拼接后的 Prompt\n    ASM-->>DC: Data Collector System Prompt\n    DC->>LLM: 使用组装后的 Prompt 推理\n\n    O->>MA: 指派市场分析\n    MA->>ASM: assemble(\"analyst\", context)\n    ASM->>SP: 加载 identity + tools + workspace<br/>+ analyst_role + analyst_focus<br/>+ memory + skills\n    SP-->>ASM: 返回拼接后的 Prompt\n    ASM-->>MA: Market Analyst System Prompt\n    MA->>LLM: 使用组装后的 Prompt 推理\n\n    O->>CA: 指派合规审查\n    CA->>ASM: assemble(\"compliance\", context)\n    ASM->>SP: 加载 identity + tools + workspace<br/>+ compliance_role + compliance_focus<br/>+ memory + skills\n    SP-->>ASM: 返回拼接后的 Prompt\n    ASM-->>CA: Compliance Agent System Prompt\n    CA->>LLM: 使用组装后的 Prompt 推理\n```\n\n# Harness 迭代 9：错误恢复与韧性（v9）\n\n## 10.1 可优化点\n\nAgent 在长流程执行中不可避免地会遇到各类错误：\n\n```\nError: 529 overloaded\n```\n\n在金融研究场景中，错误的影响被放大：\n- **Data Collector 在采集关键财报时 API 超时**：导致整个研究流程中断，已采集的数据可能丢失\n- **Report Writer 在写入报告时网络中断**：已写入的部分报告损坏，需要从头再来\n- **多 Agent 协作时的级联故障**：Data Collector 失败导致 Market Analyst 无数据可分析，整个系统崩溃\n- **数据源不可用**：AKShare 服务维护、Tavily API 限流，导致数据采集失败\n- **上下文超限**：采集了大量财报数据后，LLM 提示\"上下文太长\"\n\n缺乏错误恢复机制的 Agent 在长流程中可靠性极低。在多 Agent 场景下，一个子 Agent 的失败会通过依赖链传导到整个系统。\n\n## 10.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **输出截断恢复** | `max_tokens` 用完时，升级到 64K 重试；仍不够则注入续写提示 |\n| **上下文超限恢复** | `prompt_too_long` 时，触发 reactive compact 后重试 |\n| **临时故障恢复** | 429/529 错误时，指数退避 + 抖动，连续 529 可切换备用模型 |\n| **多 Agent 级联故障隔离** | 子 Agent 失败时，Orchestrator 捕获异常，尝试降级策略（如换数据源）而非整体崩溃 |\n| **断点续传** | 已完成的子任务状态持久化，失败后可从断点恢复 |\n\n## 10.3 迭代后的描述（v9）\n\n**【金融研究多 Agent 系统 v9 — 错误恢复与韧性】**\n\n**（在 v8 基础上新增/变更）**\n\n**用户侧体验**：错误发生时，用户看到的不是原始错误堆栈，而是友好的状态提示（如\"数据源暂时不可用，正在切换备用源…\"、\"报告生成遇到问题，正在重试…\"）。如果报告生成到一半失败，系统会输出已完成的部分报告并标注缺失章节。\n\n**三种恢复模式**：\n\n| 模式 | 触发 | 恢复动作 | 金融研究场景 |\n|------|------|---------|------------|\n| 输出截断 | `max_tokens` | 升级 8K→64K / 续写提示 | Report Writer 生成超长报告时截断 |\n| 上下文超限 | `prompt_too_long` | reactive compact → 重试 | Data Collector 采集大量财报后上下文超限 |\n| 临时故障 | 429 / 529 | 指数退避 + 抖动，连续 529 切换备用模型 | Tavily API 被限流 |\n\n**多 Agent 级联故障隔离**：\n\n```python\nasync def safe_delegate(agent, task, fallback_agent=None):\n    try:\n        return await agent.execute(task)\n    except OverloadedError:\n        # 指数退避重试\n        return await retry_with_backoff(agent.execute, task)\n    except DataSourceUnavailableError:\n        # 降级：换备用数据源\n        if fallback_agent:\n            return await fallback_agent.execute(task)\n        raise\n    except AgentCrashError:\n        # 隔离故障 Agent，标记为不可用\n        mark_agent_unavailable(agent)\n        # Orchestrator 尝试用其他方式完成\n        return await orchestrator_fallback(task)\n```\n\n**断点续传机制**：\n\n- 每个子任务完成后，将状态写入 `.checkpoints/{task_id}.json`\n- 失败时读取 checkpoint，从断点恢复\n- 金融研究场景：Data Collector 采集了 5 份财报后失败，恢复时只需重新采集剩余财报，已完成的 5 份保留\n\n\n## 10.4 错误恢复在多 Agent 流程中的位置\n\n```mermaid\nsequenceDiagram\n    participant U as 用户\n    participant O as Orchestrator\n    participant DC as Data Collector\n    participant SA as Sentiment Agent\n    participant MA as Market Analyst\n    participant API as LLM API / 数据源\n\n    U->>O: 提交股票代码\n\n    O->>DC: 指派采集任务\n    DC->>API: 调用 akshare_tool\n    API-->>DC: 429 Rate Limited\n    DC->>DC: 指数退避 (0.5s → 1s → 2s)\n    DC->>API: 重试 akshare_tool\n    API-->>DC: 数据返回\n    DC->>API: 调用 read_file(财报)\n    API-->>DC: 500 Internal Error\n    DC->>O: 返回 DataSourceUnavailable\n    O->>O: 捕获异常，切换备用数据源\n    O->>DC: 重新指派（备用数据源）\n    DC->>API: 调用备用数据源\n    API-->>DC: 数据返回\n    DC-->>O: 返回 CollectedData\n\n    O->>SA: 指派舆情分析\n    SA->>API: 调用 tavily_search\n    API-->>SA: 搜索结果\n    SA-->>O: 返回 SentimentAnalysis\n\n    O->>MA: 指派市场分析\n    MA->>API: LLM 调用（生成分析）\n    API-->>MA: max_tokens 截断\n    MA->>MA: 升级 token 到 64K\n    MA->>API: 重试\n    API-->>MA: 仍截断\n    MA->>MA: 注入续写提示\n    MA->>API: 续写\n    API-->>MA: 续写完成\n    MA-->>O: 返回 MarketAnalysis\n\n    O-->>U: 输出 FinalReport\n```\n\n# Harness 迭代 10：子 Agent 与上下文隔离（v10）\n\n## 11.1 可优化点\n\nAgent 工作越久，messages 数组越臃肿。Data Collector 读了 20 份财报、执行了 50 次工具调用，每次读文件、跑命令的输出都永久留在上下文里。Report Writer 根本不需要这些详细的执行记录——它只需要采集结果的摘要。\n\n在金融研究多 Agent 场景中，这个问题更加严重：\n- **Data Collector 的详细上下文污染 Orchestrator**：Orchestrator 的上下文里塞满了财报原文、网页 HTML、Shell 输出，挤占了调度和决策的空间\n- **Report Writer 被无关信息干扰**：写作 Agent 需要专注分析逻辑，但上下文里残留着数据采集的原始数据\n- **不同研究主题之间的上下文串扰**：上次研究茅台的上下文残留，影响本次宁德时代的分析\n- **子 Agent 的失败影响父 Agent**：Data Collector 执行了 30 轮后失败，Orchestrator 的上下文被污染且无法恢复\n\n**子 Agent 应该用独立的 messages[] 启动，不污染父对话。**\n\n## 11.2 Harness 策略\n\n| 策略 | 说明 |\n|------|------|\n| **子 Agent 封装** | Orchestrator 有一个 `task` 工具，Subagent 拥有除 `task` 外的所有基础工具（禁止递归生成） |\n| **独立上下文** | Subagent 以 `messages=[]` 启动，运行自己的循环。只有最终文本返回给 Orchestrator |\n| **结果摘要** | Subagent 可能跑了 30+ 次工具调用，但整个消息历史直接丢弃。Orchestrator 收到的只是一段摘要文本 |\n\n## 11.3 迭代后的描述（v10）\n\n**【金融研究多 Agent 系统 v10 — 子 Agent 与上下文隔离】**\n\n**（在 v9 基础上新增/变更）**\n\n**子 Agent 封装**：\n\n```python\nPARENT_TOOLS = CHILD_TOOLS + [\n    {\"name\": \"task\",\n     \"description\": \"Spawn a subagent with fresh context.\",\n     \"input_schema\": {\n         \"type\": \"object\",\n         \"properties\": {\n             \"prompt\": {\"type\": \"string\"},\n             \"agent_role\": {\"type\": \"string\", \"enum\": [\"collector\", \"sentiment\", \"analyst\", \"writer\", \"compliance\"]},\n         },\n         \"required\": [\"prompt\", \"agent_role\"],\n     }},\n]\n```\n\n**独立上下文**：\n\n```python\ndef run_subagent(prompt: str, agent_role: str) -> str:\n    # 每个子 Agent 独立的 System Prompt\n    system = get_system_prompt(agent_role, context)\n    sub_messages = [{\"role\": \"user\", \"content\": prompt}]\n    \n    for _ in range(30):  # safety limit\n        response = client.messages.create(\n            model=MODEL, system=system,\n            messages=sub_messages,\n            tools=CHILD_TOOLS, max_tokens=8000,\n        )\n        sub_messages.append({\"role\": \"assistant\",\n                             \"content\": response.content})\n        if response.stop_reason != \"tool_use\":\n            break\n        results = []\n        for block in response.content:\n            if block.type == \"tool_use\":\n                handler = TOOL_HANDLERS.get(block.name)\n                output = handler(**block.input)\n                results.append({\"type\": \"tool_result\",\n                    \"tool_use_id\": block.id,\n                    \"content\": str(output)[:50000]})\n        sub_messages.append({\"role\": \"user\", \"content\": results})\n    \n    # 只返回摘要文本，整个消息历史丢弃\n    return \"\".join(\n        b.text for b in response.content if hasattr(b, \"text\")\n    ) or \"(no summary)\"\n```\n\n**金融研究场景的上下文隔离策略**：\n\n| Agent | 上下文内容 | 隔离策略 |\n|-------|-----------|---------|\n| Orchestrator | 任务调度、子 Agent 结果摘要、全局状态 | 核心，保持精简 |\n| Data Collector | 财报原文、AKShare 返回、Shell 输出 | 隔离为子 Agent，只返回摘要 |\n| Sentiment Agent | 新闻原文、Tavily 返回、情感分析 | 隔离为子 Agent，只返回摘要 |\n| Market Analyst | 技术指标、分析推理、LLM 输出 | 隔离为子 Agent，只返回摘要 |\n| Report Writer | 报告草稿、编辑历史、write_file 输出 | 隔离为子 Agent，只返回摘要 |\n| Compliance Agent | 合规检查、问题列表、LLM 输出 | 隔离为子 Agent，只返回摘要 |\n\n**结果摘要格式**：\n\n```\n[Subagent: Data Collector]\n任务：采集 600519 (茅台) 的财务数据\n结果：\n- 公司：贵州茅台酒股份有限公司\n- 市值：¥2.5万亿\n- PE：28.5\n- PB：8.3\n- 营收(2024Q1)：¥458亿 (同比+18%)\n- 净利润(2024Q1)：¥220亿 (同比+15%)\n- 数据来源：AKShare\n- 数据完整性：已校验，无缺失\n```\n\n\n## 11.4 子 Agent 与上下文隔离架构\n\n```mermaid\nsequenceDiagram\n    participant U as 用户\n    participant O as Orchestrator (干净上下文)\n    participant DC as Data Collector (独立上下文)\n    participant SA as Sentiment Agent (独立上下文)\n    participant MA as Market Analyst (独立上下文)\n    participant RW as Report Writer (独立上下文)\n    participant CA as Compliance Agent (独立上下文)\n\n    U->>O: 提交股票代码\n    O->>O: 推理决策\n\n    Note over O: Orchestrator 上下文：<br/>- 用户输入的股票代码<br/>- 任务状态摘要<br/>- 子 Agent 进度摘要\n\n    O->>DC: task(\"采集 600519 财务数据\", agent_role=\"collector\")\n    Note over DC: Data Collector 独立上下文：<br/>- akshare_tool 返回<br/>- read_file 内容<br/>- bash 输出\n    DC->>DC: 执行 30+ 轮工具调用\n    DC-->>O: 返回摘要：<br/>\"市值 ¥2.5万亿，<br/>营收 ¥458亿，<br/>净利润 ¥220亿\"\n    Note over DC: 完整消息历史丢弃\n\n    O->>SA: task(\"分析 600519 舆情\", agent_role=\"sentiment\")\n    Note over SA: Sentiment Agent 独立上下文：<br/>- tavily_search 返回<br/>- LLM 情感分析<br/>- 新闻原文\n    SA->>SA: 执行多轮搜索和分析\n    SA-->>O: 返回摘要：<br/>\"情感评分 0.6，<br/>关键话题： earnings, growth\"\n    Note over SA: 完整消息历史丢弃\n\n    O->>MA: task(\"综合分析 600519\", agent_role=\"analyst\")<br/>+ CollectedData + SentimentAnalysis\n    Note over MA: Market Analyst 独立上下文：<br/>- 技术指标计算<br/>- LLM 综合分析<br/>- 投资建议\n    MA->>MA: 执行分析和推理\n    MA-->>O: 返回摘要：<br/>\"建议：买入，<br/>目标价：¥1800，<br/>风险等级：中等\"\n    Note over MA: 完整消息历史丢弃\n\n    O->>RW: task(\"撰写 600519 报告\", agent_role=\"writer\")<br/>+ 全部上游数据\n    Note over RW: Report Writer 独立上下文：<br/>- 报告草稿<br/>- 编辑历史<br/>- write_file 输出\n    RW->>RW: 执行多轮写作\n    RW-->>O: 返回报告片段\n    Note over RW: 完整消息历史丢弃\n\n    O->>CA: task(\"审查 600519 报告合规性\", agent_role=\"compliance\")<br/>+ InvestmentReport\n    Note over CA: Compliance Agent 独立上下文：<br/>- 合规检查<br/>- 问题列表<br/>- LLM 输出\n    CA->>CA: 执行合规审查\n    CA-->>O: 返回合规结果：<br/>\"合规评分：92/100，<br/>通过\"\n    Note over CA: 完整消息历史丢弃\n\n    O->>O: 整合 FinalReport\n    O-->>U: 输出最终研究报告\n```\n\n# 附录：完整 Harness 迭代全景图\n\n\n## 12.1 附录 A：迭代路线总览\n\n| 轮次 | 章节 | Harness 组件 | 解决的金融研究场景问题 |\n| ------ | ------ | ------------- | --------------------- |\n| v0 | 第 1 章 | Agent Loop、基础工具、规划 | 无 Harness，最朴素形态：5 个 Agent 的 Pipeline+Fan-out 编排 |\n| v1 | 第 2 章 | 工具分发与安全沙箱 | Data Collector 的 AKShare 调用可能读写工作区外的文件；Sentiment Agent 的 Tavily 搜索参数可能被注入 |\n| v2 | 第 3 章 | 权限管线 | 金融数据敏感（财报、内幕信息），Agent 需要分级权限管控；Compliance Agent 需特殊权限 |\n| v3 | 第 4 章 | Hooks 扩展机制 | 数据采集完成后自动触发数据校验、舆情分析完成后自动记录情感分数、报告撰写完成后自动触发合规审查 |\n| v4 | 第 5 章 | 规划与待办管理 | 5 个 Agent 协作时任务状态如何跨 Agent 同步；Data Collector 和 Sentiment Agent 并行后如何协调进入 Market Analyst |\n| v5 | 第 6 章 | Skill 按需知识加载 | 财报结构、行业术语、估值模型、A 股合规要求等知识按需注入，避免全量加载 |\n| v6 | 第 7 章 | 上下文压缩 | Data Collector 采集大量财报数据后上下文溢出；Report Writer 被无关原始数据淹没 |\n| v7 | 第 8 章 | 记忆系统 | 用户偏好（关注哪些指标、报告风格）、上次研究的行业背景跨会话保留 |\n| v8 | 第 9 章 | System Prompt 运行时组装 | 5 个 Agent 需要不同的 System Prompt（Data Collector 强调\"数据准确性\"，Report Writer 强调\"分析深度\"） |\n| v9 | 第 10 章 | 错误恢复与韧性 | AKShare API 超时、Tavily 限流、LLM 上下文超限、多 Agent 级联故障 |\n| v10 | 第 11 章 | 子 Agent 与上下文隔离 | Data Collector 的详细执行上下文污染 Orchestrator；不同研究主题的上下文串扰 |\n\n\n## 12.2 附录 B：全景架构图\n\n```mermaid\nflowchart TB\n    subgraph User[\"👤 用户\"]\n        U[提交股票代码 + 分析周期 + 报告语言]\n    end\n\n    subgraph Orchestrator[\"🧠 Orchestrator 主控\"]\n        direction TB\n        SP[System Prompt<br/>运行时组装]\n        TD[TodoManager<br/>全局待办]\n        MEM[Memory<br/>记忆系统]\n        ER[Error Recovery<br/>错误恢复/级联隔离]\n    end\n\n    subgraph Stage1[\"Stage 1: Fan-out 并行\"]\n        direction TB\n        DC[Data Collector<br/>AKShare 数据采集]\n        SA[Sentiment Agent<br/>Tavily 舆情分析]\n    end\n\n    subgraph Stage2[\"Stage 2: Pipeline 串行\"]\n        direction TB\n        MA[Market Analyst<br/>技术指标 + LLM 综合分析]\n    end\n\n    subgraph Stage3[\"Stage 3: Pipeline 串行\"]\n        direction TB\n        RW[Report Writer<br/>结构化投资报告生成]\n    end\n\n    subgraph Stage4[\"Stage 4: Pipeline 串行\"]\n        direction TB\n        CA[Compliance Agent<br/>合规审查与免责声明]\n    end\n\n    subgraph Harness[\"🔧 Harness 基础设施\"]\n        direction TB\n        DM[工具分发映射表<br/>Tool Dispatch Map]\n        PM[权限管线<br/>三道闸门]\n        HK[Hooks 注册表<br/>4 个事件 × 多 Agent]\n        SB[安全沙箱<br/>路径校验]\n    end\n\n    subgraph Output[\"📁 输出\"]\n        direction TB\n        RPT[InvestmentReport<br/>Markdown / PDF / JSON]\n        AUDIT[审计日志<br/>audit_log/]\n        CHECK[检查点<br/>.checkpoints/]\n    end\n\n    U --> Orchestrator\n    Orchestrator --> Stage1\n    DC --> MA\n    SA --> MA\n    MA --> RW\n    RW --> CA\n    CA --> Orchestrator\n    Orchestrator --> Output\n\n    DC & SA & MA & RW & CA --> DM\n    DM --> PM\n    PM --> HK\n    HK --> SB\n```\n\n**数据流说明**：\n\n```mermaid\nflowchart TD\n    User[\"User\"] --> Query[\"StockQuery<br/>ticker / period / language\"]\n    Query --> Orchestrator[\"Orchestrator 调度\"]\n    Orchestrator --> Fanout{\"Stage 1<br/>Fan-out 并行\"}\n    Fanout --> DC[\"Data Collector<br/>CollectedData\"]\n    Fanout --> SA[\"Sentiment Agent<br/>SentimentAnalysis\"]\n    DC --> Wait[\"等待 Stage 1 完成\"]\n    SA --> Wait\n    Wait --> MA[\"Market Analyst<br/>MarketAnalysis\"]\n    MA --> RW[\"Report Writer<br/>InvestmentReport\"]\n    RW --> CA[\"Compliance Agent<br/>ComplianceReport\"]\n    CA --> Final[\"FinalReport<br/>report / compliance / data / sentiment / market\"]\n    Final --> Output[\"输出报告<br/>PDF + Markdown + JSON\"]\n```\n\n\n## 12.3 附录 C：vN 完整规格描述\n\n> 汇总所有迭代后的最终完整设计描述。\n\n\n**【金融研究多 Agent 系统 v10 — 完整规格描述】**\n\n**身份**：你是一个多 Agent 金融研究报告自动生成系统的 Orchestrator，负责协调 5 个专业 Agent（Data Collector、Sentiment Agent、Market Analyst、Report Writer、Compliance Agent），根据用户输入的 A 股股票代码生成结构化投资研究报告。\n\n**角色分工**：\n- **Data Collector（数据采集 Agent）**：通过 AKShare 采集 A 股行情、财务指标、公司信息、公告摘要\n- **Sentiment Agent（舆情分析 Agent）**：通过 Tavily API 搜索财经新闻，使用 LLM 分析情感倾向\n- **Market Analyst（市场分析 Agent）**：计算 RSI/MA/波动率等技术指标，结合 LLM 进行综合分析\n- **Report Writer（报告撰写 Agent）**：综合所有分析结果，生成包含 7 个章节的结构化投资报告\n- **Compliance Agent（合规审查 Agent）**：审查报告合规性，确保符合 A 股监管要求\n\n**编排模式**：Pipeline + Fan-out\n- **Stage 1（Fan-out）**：Data Collector || Sentiment Agent 并行执行\n- **Stage 2（Pipeline）**：Market Analyst 等待 Stage 1 完成后执行\n- **Stage 3（Pipeline）**：Report Writer 等待 Market Analyst 完成后执行\n- **Stage 4（Pipeline）**：Compliance Agent 等待 Report Writer 完成后执行\n\n**数据模型**（Pydantic v2 强制 JSON Schema）：\n- `StockQuery` → `CollectedData` + `SentimentAnalysis` → `MarketAnalysis` → `InvestmentReport` → `ComplianceReport` → `FinalReport`\n\n**工具**（通过分发映射表注册）：\n- `bash`：执行 shell 命令（路径沙箱校验）\n- `read_file`：读取文件内容（路径沙箱校验）\n- `write_file`：写入文件（路径沙箱校验）\n- `edit_file`：编辑文件（路径沙箱校验）\n- `akshare_tool`：AKShare 数据采集（Data Collector 专用）\n- `web_search` / `news_search`：Tavily 搜索（Sentiment Agent 专用）\n- `todo_write`：创建/更新待办事项列表（跨 Agent 同步）\n- `load_skill`：按需加载 Skill 知识\n- `compact`：手动触发上下文压缩\n\n**权限管线**（三道闸门）：\n1. **硬拒绝列表**：永远禁止的危险操作（`rm -rf /`、`sudo`、AKShare 敏感接口调用等）\n2. **规则匹配**：上下文相关的操作（写工作区外、敏感数据外发、非授权行业数据查询等）\n3. **用户审批**：规则命中后暂停等用户确认\n\n**Hooks 机制**（四个事件 × 多 Agent）：\n- `UserPromptSubmit`：注入行业背景信息、用户偏好\n- `PreToolUse`：权限检查、敏感数据扫描、路径沙箱校验\n- `PostToolUse`：数据校验、素材溯源、自动备份、触发下游 Agent\n- `Stop`：输出研究统计、触发合规审查\n\n**TodoManager**（跨 Agent 同步）：\n- 待办项有 `pending`、`in_progress`、`completed` 三种状态\n- 同一时间只允许一个 `in_progress`，强制顺序聚焦\n- Orchestrator 维护全局待办列表，子 Agent 通过 Hook 同步进度\n- 默认待办模板：数据采集 → 舆情分析 → 市场分析 → 报告撰写 → 合规审查 → 输出报告\n- Nag Reminder：3 轮未更新时注入提醒\n\n**Skill 按需加载**：\n- 第一层（常驻）：System Prompt 中列出所有可用 Skill 名称和描述\n- 第二层（按需）：Agent 调用 `load_skill` 加载完整内容\n- 预置 Skill：`financial-statement-analysis`、`valuation-models`、`technical-analysis`、`industry-research`、`a-share-compliance`、`report-writing`、`macro-economics`\n\n**上下文压缩**（三层策略）：\n- **Layer 1: micro_compact**：每轮自动替换旧 tool result 为占位符\n- **Layer 2: auto_compact**：token > 50000 时自动触发\n- **Layer 3: manual_compact**：Agent 显式调用 `compact`\n\n**记忆系统**：\n- 四类记忆：`user`（用户偏好）、`feedback`（历史反馈）、`project`（项目上下文）、`reference`（参考材料）\n- 索引常驻 SYSTEM，内容按需注入\n- 每轮结束后自动提取新记忆\n- 文件积累到一定数量后自动整理去重\n\n**System Prompt 运行时组装**：\n- PROMPT_SECTIONS 分段定义（identity、tools、workspace、agent_role、memory 等）\n- 按 Agent 角色按需拼接（Data Collector 强调\"数据准确性\"，Report Writer 强调\"分析深度\"）\n- 缓存避免重复组装\n\n**错误恢复**（三种模式）：\n- 输出截断：升级 8K→64K / 续写提示\n- 上下文超限：reactive compact → 重试\n- 临时故障：指数退避 + 抖动，连续 529 切换备用模型\n- 多 Agent 级联故障隔离：子 Agent 失败时 Orchestrator 捕获异常，尝试降级策略而非整体崩溃\n- 断点续传：已完成的子任务状态持久化，失败后可从断点恢复\n\n**子 Agent 与上下文隔离**：\n- 5 个 Agent 作为子 Agent 运行，独立 `messages[]`\n- Data Collector 的详细执行记录不污染 Orchestrator 的调度上下文\n- 只有结构化结果（Pydantic 模型）返回给 Orchestrator\n- 不同研究主题之间上下文完全隔离\n\n\n## 12.4 附录 D：Harness 四大核心问题的解决情况回顾\n\nHarness 工程需要解决的四个核心问题可以归纳为：\n\n| 核心问题 | 通俗解释 | 解决迭代 | 具体策略 |\n|---------|---------|---------|---------|\n| **状态管理** | Agent 执行到哪一步了？已经做了什么？还差什么？ | v4 | TodoManager 跨 Agent 同步，全局待办列表，金融研究默认模板（数据采集→舆情分析→市场分析→报告撰写→合规审查） |\n| **上下文交接** | 每一步执行完，下一步需要知道什么信息？信息怎么传递？ | v10 | 子 Agent 摘要返回，Pydantic 结构化数据模型传递，只有结构化结果进入 Orchestrator |\n| **反馈闭环** | 工具调用成功了还是失败了？错误信息够不够清晰？怎么从错误中恢复？ | v9 | 三种恢复模式 + 级联故障隔离 + 断点续传；AKShare 超时换备用数据源，Tavily 限流指数退避 |\n| **长流程稳定性** | 长流程执行中，Agent 能否保持目标一致性？上下文是否可控？ | v6 + v7 | 上下文压缩 + 记忆系统，跨会话保留用户偏好和行业背景；Nag Reminder 防止任务偏离 |\n\n**任务完整性保障**（确保不遗漏关键步骤）：\n- 通过 `todo_write` 规划确保不遗漏关键步骤（数据采集→舆情分析→市场分析→报告撰写→合规审查）\n- 通过 `Nag Reminder` 强制 Agent 回顾计划\n- 通过 Hooks 机制自动触发数据校验（PostToolUse 校验 AKShare 返回数据的完整性）\n- Pipeline 编排确保依赖顺序：Market Analyst 必须等待 Data Collector + Sentiment Agent 完成后才启动\n\n**操作安全性保障**（确保不产生错误操作）：\n- 通过权限管线防止越权操作（硬拒绝 `rm`、规则匹配 AKShare 敏感接口）\n- 通过敏感数据扫描防止信息泄露（PreToolUse 扫描 outgoing 数据）\n- 通过数据校验 Hook 确保数据质量（PostToolUse 校验 AKShare 返回的财务数据字段完整性）\n- 通过合规审查 Agent 确保报告符合监管要求\n\n**上下文效率保障**（确保不浪费 token 和注意力）：\n- 通过上下文压缩控制 token 使用（micro_compact 每轮替换旧 tool result）\n- 通过 Skill 按需加载避免无关知识干扰（分析白酒行业时不加载新能源行业知识）\n- 通过 System Prompt 运行时组装避免信息过载（Data Collector 和 Report Writer 使用不同的 System Prompt）\n- 通过子 Agent 上下文隔离防止详细执行记录污染 Orchestrator\n\n**稳定性**：\n- 通过错误恢复机制处理 API 异常（AKShare 超时、Tavily 限流、LLM 上下文超限）\n- 通过级联故障隔离防止单点故障（Data Collector 失败时 Market Analyst 可降级运行）\n- 通过断点续传保证任务可恢复（已完成的 Stage 1 数据持久化，失败后可从 Stage 2 恢复）";
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+  <script>
+    const article = document.getElementById("article");
+    const sideNav = document.getElementById("sideNav");
+    const mobileNav = document.getElementById("mobileNav");
+    const mobilePanel = document.getElementById("mobilePanel");
+    const openMenu = document.getElementById("openMenu");
+    const closeMenu = document.getElementById("closeMenu");
+    const overviewToc = document.getElementById("overviewToc");
+    const progress = document.getElementById("progress");
+    const navGroups = [
+      { title: "总览", dot: "", start: 0, end: 1 },
+      { title: "Harness 基础", dot: "green", start: 2, end: 4 },
+      { title: "协作与知识", dot: "amber", start: 5, end: 8 },
+      { title: "运行韧性", dot: "red", start: 9, end: 11 },
+      { title: "附录", dot: "violet", start: 12, end: 12 },
+    ];
+    let documentChapters = [];
+
+    function slugify(text) {
+      return text
+        .trim()
+        .toLowerCase()
+        .replace(/[\s\u3000]+/g, "-")
+        .replace(/[：:，,。.“”"()（）【】\[\]{}<>/\\|?！!、]+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "") || "section";
+    }
+
+    function assignHeadingIds() {
+      const used = new Map();
+      document.querySelectorAll("#article h1, #article h2, #article h3").forEach((heading) => {
+        const base = slugify(heading.textContent);
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        heading.id = count ? `${base}-${count + 1}` : base;
+      });
+    }
+
+    function buildStructure() {
+      const chapters = [];
+      let current = null;
+      document.querySelectorAll("#article h1, #article h2").forEach((heading) => {
+        if (heading.tagName === "H1") {
+          current = { id: heading.id, title: heading.textContent.trim(), children: [] };
+          chapters.push(current);
+        } else if (current) {
+          current.children.push({ id: heading.id, title: heading.textContent.trim() });
+        }
+      });
+      return chapters;
+    }
+
+    function createLink(item) {
+      const link = document.createElement("a");
+      link.href = "#" + item.id;
+      link.textContent = item.title;
+      link.dataset.target = item.id;
+      return link;
+    }
+
+    function chapterNo(index) {
+      return index < 12 ? String(index).padStart(2, "0") : "附";
+    }
+
+    function sidebarDisplayTitle(title, stripHarness) {
+      return stripHarness
+        ? title
+            .replace(/^Harness\s+/i, "")
+            .replace(/^附录[：:]\s*/, "")
+            .replace(/\s*[（(]v\d+[）)]\s*$/i, "")
+        : title;
+    }
+
+    function renderChapterNav(chapters, target, options = {}) {
+      const stripHarness = options.stripHarness === true;
+      target.replaceChildren();
+      navGroups.forEach((group) => {
+        const groupChapters = chapters.slice(group.start, group.end + 1);
+        if (!groupChapters.length) return;
+
+        const groupEl = document.createElement("div");
+        groupEl.className = "sidebar-group";
+
+        const title = document.createElement("div");
+        title.className = "sidebar-title";
+        const dot = document.createElement("span");
+        dot.className = group.dot ? "dot " + group.dot : "dot";
+        dot.setAttribute("aria-hidden", "true");
+        const titleText = document.createElement("span");
+        titleText.textContent = sidebarDisplayTitle(group.title, stripHarness);
+        title.append(dot, titleText);
+
+        const list = document.createElement("ul");
+        list.className = "nav-list";
+
+        groupChapters.forEach((chapter, offset) => {
+          const index = group.start + offset;
+          const item = document.createElement("li");
+          const link = document.createElement("a");
+          link.className = "chapter-link";
+          link.href = "#" + chapter.id;
+          link.dataset.target = chapter.id;
+          link.addEventListener("click", () => {
+            setActive(chapter.id);
+          });
+
+          const no = document.createElement("span");
+          no.className = "nav-index";
+          no.textContent = chapterNo(index);
+
+          const titleText = document.createElement("span");
+          titleText.className = "chapter-title-link";
+          titleText.textContent = sidebarDisplayTitle(chapter.title, stripHarness);
+
+          link.append(no, titleText);
+          item.append(link);
+          list.append(item);
+        });
+
+        groupEl.append(title, list);
+        target.append(groupEl);
+      });
+    }
+
+    function findChapterForId(chapters, id) {
+      return chapters.find((chapter) => (
+        chapter.id === id || chapter.children.some((child) => child.id === id)
+      ));
+    }
+
+    function createJumpLink(item, no) {
+      const link = createLink(item);
+      link.className = "jump-link";
+      link.textContent = "";
+      const noEl = document.createElement("span");
+      noEl.className = "jump-no";
+      noEl.textContent = no;
+      const text = document.createElement("span");
+      text.textContent = item.title;
+      link.append(noEl, text);
+      return link;
+    }
+
+    function renderOverviewToc(chapters) {
+      overviewToc.replaceChildren();
+      chapters.forEach((chapter, index) => {
+        const item = document.createElement("li");
+        item.className = "toc-chapter";
+        item.append(createJumpLink(chapter, chapterNo(index)));
+        if (chapter.children.length) {
+          const list = document.createElement("ul");
+          chapter.children.forEach((child) => {
+            const childItem = document.createElement("li");
+            childItem.append(createJumpLink(child, ""));
+            list.append(childItem);
+          });
+          item.append(list);
+        }
+        overviewToc.append(item);
+      });
+    }
+
+    function enhanceArticleHeadings(chapters) {
+      chapters.forEach((chapter, index) => {
+        const heading = document.getElementById(chapter.id);
+        if (!heading || heading.querySelector(".section-no")) return;
+        const no = document.createElement("span");
+        no.className = "section-no";
+        no.textContent = chapterNo(index);
+        no.setAttribute("aria-hidden", "true");
+        heading.prepend(no);
+      });
+    }
+
+    function enhanceRevisionNotes() {
+      article.querySelectorAll("p").forEach((paragraph) => {
+        const text = paragraph.textContent.trim();
+        if (/^（在 v\d+ 基础上新增\/变更）$/.test(text)) {
+          paragraph.classList.add("revision-note");
+          paragraph.textContent = text.replace(/^（|）$/g, "");
+        }
+      });
+    }
+
+    function prepareMermaid() {
+      article.querySelectorAll("pre code.language-mermaid").forEach((code) => {
+        const wrap = document.createElement("div");
+        wrap.className = "mermaid-wrap";
+        const title = document.createElement("div");
+        title.className = "diagram-title";
+        title.textContent = "Mermaid 图表";
+        const scroll = document.createElement("div");
+        scroll.className = "diagram-scroll";
+        const diagram = document.createElement("div");
+        diagram.className = "mermaid";
+        diagram.textContent = code.textContent;
+        scroll.append(diagram);
+        wrap.append(title, scroll);
+        code.closest("pre").replaceWith(wrap);
+      });
+    }
+
+    function enhanceTables() {
+      article.querySelectorAll("table").forEach((table) => {
+        if (table.parentElement.classList.contains("table-wrap")) return;
+        const wrap = document.createElement("div");
+        wrap.className = "table-wrap";
+        table.parentNode.insertBefore(wrap, table);
+        wrap.append(table);
+      });
+    }
+
+    function enhanceCodeBlocks() {
+      article.querySelectorAll("pre").forEach((pre, index) => {
+        if (pre.parentElement.classList.contains("code-shell")) return;
+        const code = pre.querySelector("code");
+        const languageClass = [...(code?.classList || [])].find((name) => name.startsWith("language-"));
+        const language = languageClass ? languageClass.replace("language-", "") : "text";
+        const shell = document.createElement("div");
+        shell.className = "code-shell";
+
+        const label = document.createElement("div");
+        label.className = "code-label";
+        label.textContent = language;
+
+        const copy = document.createElement("button");
+        copy.className = "copy-code";
+        copy.type = "button";
+        copy.textContent = "复制";
+        copy.addEventListener("click", async () => {
+          await navigator.clipboard.writeText(code?.textContent || "");
+          copy.textContent = "已复制";
+          setTimeout(() => { copy.textContent = "复制"; }, 1200);
+        });
+
+        pre.parentNode.insertBefore(shell, pre);
+        shell.append(label, copy, pre);
+        pre.dataset.codeIndex = String(index);
+      });
+    }
+
+    function highlightCode() {
+      article.querySelectorAll("pre code").forEach((code) => {
+        if (!code.classList.contains("language-mermaid")) {
+          hljs.highlightElement(code);
+        }
+      });
+    }
+
+    function setActive(id) {
+      const chapter = findChapterForId(documentChapters, id);
+      const chapterId = chapter?.id || id;
+      const activeIds = new Set([chapterId]);
+
+      document.querySelectorAll("[data-target]").forEach((el) => {
+        el.classList.toggle("active", activeIds.has(el.dataset.target));
+      });
+    }
+
+    function initScrollSpy() {
+      const headings = [...document.querySelectorAll("#overview, #article h1, #article h2")];
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (visible?.target?.id && visible.target.id !== "overview") {
+          setActive(visible.target.id);
+        }
+      }, { rootMargin: "-84px 0px -72% 0px", threshold: [0, 1] });
+      headings.forEach((heading) => observer.observe(heading));
+    }
+
+    function updateProgress() {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = max > 0 ? window.scrollY / max : 0;
+      progress.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+    }
+
+    function bindControls() {
+      openMenu.addEventListener("click", () => {
+        mobilePanel.classList.add("is-open");
+        mobilePanel.setAttribute("aria-hidden", "false");
+        openMenu.setAttribute("aria-expanded", "true");
+      });
+      closeMenu.addEventListener("click", () => {
+        mobilePanel.classList.remove("is-open");
+        mobilePanel.setAttribute("aria-hidden", "true");
+        openMenu.setAttribute("aria-expanded", "false");
+      });
+      mobileNav.addEventListener("click", (event) => {
+        if (event.target.closest("a")) {
+          mobilePanel.classList.remove("is-open");
+          mobilePanel.setAttribute("aria-hidden", "true");
+          openMenu.setAttribute("aria-expanded", "false");
+        }
+      });
+      window.addEventListener("scroll", updateProgress, { passive: true });
+      window.addEventListener("resize", updateProgress);
+    }
+
+    async function render() {
+      if (!window.marked || !window.hljs || !window.mermaid) {
+        article.innerHTML = '<div class="load-error">页面依赖加载失败，请确认网络可访问后刷新。</div>';
+        return;
+      }
+      marked.setOptions({ gfm: true, breaks: false, headerIds: false, mangle: false });
+      article.innerHTML = marked.parse(window.__HARNESS_MARKDOWN__);
+      assignHeadingIds();
+      enhanceRevisionNotes();
+      prepareMermaid();
+      enhanceTables();
+      highlightCode();
+      enhanceCodeBlocks();
+      const chapters = buildStructure();
+      documentChapters = chapters;
+      renderChapterNav(chapters, sideNav, { stripHarness: true });
+      renderChapterNav(chapters, mobileNav);
+      renderOverviewToc(chapters);
+      enhanceArticleHeadings(chapters);
+      bindControls();
+      initScrollSpy();
+      if (chapters[0]) setActive(chapters[0].id);
+      updateProgress();
+
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "loose",
+        theme: "base",
+        themeVariables: {
+          fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Microsoft YaHei, sans-serif",
+          primaryColor: "#ffffff",
+          primaryTextColor: "#111114",
+          primaryBorderColor: "#94a3b8",
+          lineColor: "#64748b",
+          secondaryColor: "#eff6ff",
+          tertiaryColor: "#f6f7f9",
+          noteBkgColor: "#fffbeb",
+          noteTextColor: "#51525a"
+        }
+      });
+      await mermaid.run();
+    }
+
+    render();
+  </script>
+</body>
+</html>
