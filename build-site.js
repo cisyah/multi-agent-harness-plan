@@ -115,11 +115,26 @@ function cleanChapter(file, markdown) {
   return cleaned;
 }
 
-const documentMarkdown = files
-  .map((file) => cleanChapter(file, fs.readFileSync(path.join(root, file), "utf8")))
-  .join("\n\n");
+function extractTitle(markdown) {
+  const match = markdown.match(/^#\s+(.+)$/m);
+  return match ? match[1].trim() : "未命名章节";
+}
 
-const escapedMarkdown = JSON.stringify(documentMarkdown).replace(/<\/script/gi, "<\\/script");
+function chapterNo(index) {
+  return index < 12 ? String(index).padStart(2, "0") : "附";
+}
+
+const chapters = files.map((file, index) => {
+  const markdown = cleanChapter(file, fs.readFileSync(path.join(root, file), "utf8"));
+  return {
+    id: path.basename(file, ".md"),
+    no: chapterNo(index),
+    title: extractTitle(markdown),
+    markdown,
+  };
+});
+
+const escapedChapters = JSON.stringify(chapters).replace(/<\/script/gi, "<\\/script");
 const pageTitle = "Multi-Agent股票研究助手的Harness迭代方案";
 const pageDescription = "以 Multi-Agent 股票研究助手为主线，逐轮呈现 Harness 工程迭代方案。";
 
@@ -131,6 +146,17 @@ const html = `<!doctype html>
   <title>${pageTitle}</title>
   <meta name="description" content="${pageDescription}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script>
+    (function () {
+      try {
+        var storedTheme = localStorage.getItem("harness-theme");
+        var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme = storedTheme || (prefersDark ? "dark" : "light");
+      } catch (error) {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
   <style>
     :root {
       color-scheme: light;
@@ -161,11 +187,75 @@ const html = `<!doctype html>
       --diagram-panel: #f8fafc;
       --diagram-stroke: #94a3b8;
       --shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+      --header-separator: #cfd3dc;
+      --toggle-bg: #f7f8fb;
+      --toggle-border: #d9dee8;
+      --toggle-thumb: #ffffff;
+      --toggle-icon: #707684;
+      --toggle-shadow: 0 2px 7px rgba(15, 23, 42, 0.18);
+      --toggle-shift: 30px;
+      --github-icon: #4f535f;
+      --revision-border: #c3c8d0;
+      --revision-text: #626b7a;
+      --callout-bg: linear-gradient(105deg, #f1f7fd 0%, #f2fcf6 100%);
+      --callout-bar: linear-gradient(180deg, #408cf4 0%, #13bfa8 100%);
+      --callout-text: #273fa9;
+      --table-bg: #ffffff;
+      --diagram-title-text: #334155;
+      --diagram-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
       --radius: 5px;
       --header-h: 58px;
       --shell: 1240px;
       --sidebar: 282px;
       --article: 840px;
+      --content-leading: 1.72;
+      --route-top-gap: 48px;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #09090b;
+      --bg-soft: #121318;
+      --bg-elevated: #17181f;
+      --text: #f5f7fb;
+      --text-soft: #c2c5cf;
+      --text-muted: #8e94a3;
+      --border: #2a2d36;
+      --border-strong: #3a3f4b;
+      --code-bg: #050812;
+      --code-border: #202938;
+      --code-text: #dbeafe;
+      --link: #f5f7fb;
+      --link-underline: #8e94a3;
+      --blue: #2563eb;
+      --blue-soft: rgba(37, 99, 235, 0.16);
+      --green: #059669;
+      --green-soft: rgba(5, 150, 105, 0.16);
+      --amber: #d97706;
+      --amber-soft: rgba(217, 119, 6, 0.16);
+      --red: #dc2626;
+      --red-soft: rgba(220, 38, 38, 0.16);
+      --violet: #7c3aed;
+      --violet-soft: rgba(124, 58, 237, 0.18);
+      --diagram-bg: #0f1117;
+      --diagram-panel: #151923;
+      --diagram-stroke: #475569;
+      --shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
+      --header-separator: #3a3f4b;
+      --toggle-bg: #121318;
+      --toggle-border: #3a3f4b;
+      --toggle-thumb: #242b36;
+      --toggle-icon: #d8dee9;
+      --toggle-shadow: 0 2px 7px rgba(0, 0, 0, 0.35);
+      --github-icon: #d8dee9;
+      --revision-border: #3b4655;
+      --revision-text: #a8b0bf;
+      --callout-bg: linear-gradient(105deg, #121f35 0%, #10281f 100%);
+      --callout-bar: linear-gradient(180deg, #78a8ff 0%, #49c99a 100%);
+      --callout-text: #dce8ff;
+      --table-bg: #10151d;
+      --diagram-title-text: #c6ccd7;
+      --diagram-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
     }
 
     * {
@@ -180,9 +270,9 @@ const html = `<!doctype html>
     body {
       margin: 0;
       background: var(--bg);
-      color: var(--text-soft);
+      color: var(--text);
       font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       line-height: 1.72;
       overflow-x: hidden;
     }
@@ -212,18 +302,6 @@ const html = `<!doctype html>
 
     .skip-link:focus {
       transform: translateY(0);
-    }
-
-    .progress {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 120;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(90deg, var(--blue), var(--green));
-      transform: scaleX(0);
-      transform-origin: left center;
     }
 
     .site-header {
@@ -282,13 +360,82 @@ const html = `<!doctype html>
       overflow-wrap: anywhere;
     }
 
-    .header-note {
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 22px;
       margin-left: auto;
-      color: var(--text-muted);
-      font-size: 13px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    }
+
+    .theme-toggle {
+      position: relative;
+      width: 64px;
+      height: 32px;
+      border: 1px solid var(--toggle-border);
+      border-radius: 999px;
+      background: var(--toggle-bg);
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+      color: var(--toggle-icon);
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease;
+    }
+
+    .theme-toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 4px;
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: var(--toggle-thumb);
+      box-shadow: var(--toggle-shadow);
+      transition: transform 0.18s ease;
+    }
+
+    html[data-theme="dark"] .theme-toggle-thumb {
+      transform: translateX(var(--toggle-shift));
+    }
+
+    .theme-icon {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      opacity: 0;
+      transition: opacity 0.16s ease;
+    }
+
+    html[data-theme="light"] .theme-icon.sun,
+    html[data-theme="dark"] .theme-icon.moon {
+      opacity: 1;
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 46px;
+      background: var(--header-separator);
+    }
+
+    .github-link {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      color: var(--github-icon);
+      text-decoration: none;
+      transition: color 0.16s ease, transform 0.16s ease;
+    }
+
+    .github-link:hover {
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+
+    .github-link svg {
+      width: 30px;
+      height: 30px;
+      fill: currentColor;
     }
 
     .menu-button {
@@ -312,7 +459,7 @@ const html = `<!doctype html>
       gap: 42px;
       max-width: var(--shell);
       margin: 0 auto;
-      padding: 34px 22px 72px;
+      padding: 48px 22px 72px;
       align-items: start;
       justify-content: start;
     }
@@ -333,19 +480,30 @@ const html = `<!doctype html>
     }
 
     .sidebar-group {
-      margin-bottom: 22px;
+      margin-bottom: 28px;
     }
 
     .sidebar-title {
       display: flex;
       align-items: center;
       gap: 6px;
-      margin: 0 0 6px;
+      margin: 0 0 9px;
       color: var(--text-muted);
       font-size: 10.5px;
       font-weight: 750;
       letter-spacing: 0.08em;
       text-transform: uppercase;
+    }
+
+    .overview-nav-link {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.16s ease;
+    }
+
+    .overview-nav-link:hover,
+    .overview-nav-link.active {
+      color: var(--text);
     }
 
     .dot {
@@ -362,7 +520,7 @@ const html = `<!doctype html>
 
     .nav-list {
       display: grid;
-      gap: 3px;
+      gap: 7px;
       margin: 0;
       padding: 0;
       list-style: none;
@@ -377,12 +535,12 @@ const html = `<!doctype html>
       align-items: center;
       gap: 6px;
       min-width: 0;
-      min-height: 32px;
-      padding: 6px 6px;
+      min-height: 40px;
+      padding: 8px 7px;
       border-radius: var(--radius);
       color: var(--text-muted);
       font-size: 12.5px;
-      line-height: 1.32;
+      line-height: 1.45;
       text-decoration: none;
       transition: background 0.16s ease, color 0.16s ease;
     }
@@ -454,7 +612,7 @@ const html = `<!doctype html>
       max-width: 760px;
       margin: 18px 0 12px;
       color: var(--text);
-      font-size: clamp(30px, 3.4vw, 42px);
+      font-size: clamp(26px, 3.4vw, 42px);
       line-height: 1.04;
       font-weight: 800;
       letter-spacing: 0;
@@ -508,7 +666,7 @@ const html = `<!doctype html>
       margin: 0;
       color: var(--text-soft);
       font-size: 15px;
-      line-height: 1.72;
+      line-height: var(--content-leading);
     }
 
     .overview-quote {
@@ -521,7 +679,7 @@ const html = `<!doctype html>
     .overview-quote p {
       margin: 0;
       font-size: 15px;
-      line-height: 1.72;
+      line-height: var(--content-leading);
     }
 
     .overview-quote em {
@@ -555,7 +713,7 @@ const html = `<!doctype html>
       margin: 0;
       color: var(--text-soft);
       font-size: 15px;
-      line-height: 1.72;
+      line-height: var(--content-leading);
     }
 
     .insight-list {
@@ -565,7 +723,7 @@ const html = `<!doctype html>
       padding-left: 22px;
       color: var(--text-soft);
       font-size: 15px;
-      line-height: 1.72;
+      line-height: var(--content-leading);
     }
 
     .insight-list li {
@@ -659,7 +817,25 @@ const html = `<!doctype html>
       max-width: var(--article);
       color: var(--text-soft);
       font-size: 15px;
-      line-height: 1.72;
+      line-height: var(--content-leading);
+    }
+
+    .overview-return {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      margin-left: auto;
+      padding: 0;
+      color: var(--text-soft);
+      text-decoration: none;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 400;
+      transition: color 0.16s ease;
+    }
+
+    .overview-return:hover {
+      color: var(--blue);
     }
 
     .article h1,
@@ -682,6 +858,10 @@ const html = `<!doctype html>
       font-weight: 800;
     }
 
+    .article h1 .heading-title {
+      min-width: 0;
+    }
+
     .article h1:first-child {
       margin-top: 0;
     }
@@ -697,33 +877,33 @@ const html = `<!doctype html>
       color: var(--text-soft);
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 700;
     }
 
     .article h2 {
-      margin: 32px 0 10px;
+      margin: 44px 0 12px;
       font-size: 19px;
       line-height: 1.35;
-      font-weight: 800;
+      font-weight: 720;
     }
 
     .article h3 {
-      margin: 28px 0 10px;
-      font-size: 17px;
+      margin: 34px 0 12px;
+      font-size: 16px;
       line-height: 1.35;
-      font-weight: 750;
+      font-weight: 650;
     }
 
     .article p {
-      margin: 10px 0;
+      margin: 12px 0;
       color: var(--text-soft);
     }
 
     .article .revision-note {
-      margin: 6px 0 16px;
-      border-left: 2px solid #c3c8d0;
+      margin: 8px 0 20px;
+      border-left: 2px solid var(--revision-border);
       padding: 5px 0 5px 12px;
-      color: #626b7a;
+      color: var(--revision-text);
       font-size: 15px;
       font-weight: 500;
       line-height: 1.55;
@@ -736,10 +916,10 @@ const html = `<!doctype html>
 
     .article blockquote {
       position: relative;
-      margin: 20px 0;
+      margin: 24px 0;
       border: 0;
       border-radius: 6px;
-      background: linear-gradient(105deg, #f1f7fd 0%, #f2fcf6 100%);
+      background: var(--callout-bg);
       padding: 24px 28px 24px 42px;
       overflow: hidden;
     }
@@ -749,36 +929,73 @@ const html = `<!doctype html>
       position: absolute;
       inset: 0 auto 0 0;
       width: 3px;
-      background: linear-gradient(180deg, #408cf4 0%, #13bfa8 100%);
+      background: var(--callout-bar);
     }
 
     .article blockquote p {
       margin: 0;
-      color: #273fa9;
+      color: var(--callout-text);
       font-size: 15px;
       font-weight: 650;
-      line-height: 1.72;
+      line-height: var(--content-leading);
     }
 
     .article hr {
       height: 1px;
       border: 0;
-      margin: 28px 0;
+      margin: 34px 0;
       background: var(--border);
     }
 
     .article ul,
     .article ol {
+      margin: 14px 0 18px;
       padding-left: 24px;
     }
 
+    .article .numbered-badge-list {
+      counter-reset: article-list;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .article .numbered-badge-list > li {
+      position: relative;
+      min-height: 28px;
+      padding-left: 42px;
+    }
+
+    .article .numbered-badge-list > li::before {
+      counter-increment: article-list;
+      content: counter(article-list);
+      position: absolute;
+      top: 0.12em;
+      left: 0;
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 22px;
+      border: 1px solid color-mix(in srgb, var(--blue) 38%, var(--border));
+      border-radius: 5px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .article .numbered-badge-list > li > ul {
+      margin: 10px 0 0;
+    }
+
     .article li + li {
-      margin-top: 4px;
+      margin-top: 10px;
     }
 
     .article strong {
-      color: var(--text);
-      font-weight: 700;
+      color: var(--text-soft);
+      font-weight: 650;
     }
 
     .article code:not(pre code) {
@@ -795,7 +1012,7 @@ const html = `<!doctype html>
 
     .code-shell {
       position: relative;
-      margin: 16px 0;
+      margin: 20px 0;
     }
 
     .code-label {
@@ -852,37 +1069,61 @@ const html = `<!doctype html>
 
     .table-wrap {
       overflow-x: auto;
-      margin: 16px 0;
+      margin: 20px 0;
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      -webkit-overflow-scrolling: touch;
     }
 
     table {
-      width: 100%;
-      min-width: 620px;
+      width: max-content;
+      min-width: 100%;
       border-collapse: collapse;
       font-size: 13px;
       line-height: 1.55;
-      background: #fff;
+      background: var(--table-bg);
+      word-break: keep-all;
+      overflow-wrap: normal;
+      hyphens: none;
     }
+
+    .table-wrap.cols-2 table { min-width: 760px; }
+    .table-wrap.cols-3 table { min-width: 860px; }
+    .table-wrap.cols-4 table { min-width: 980px; }
+    .table-wrap.cols-5 table { min-width: 1120px; }
 
     th,
     td {
-      padding: 11px 13px;
+      padding: 12px 14px;
       border-bottom: 1px solid var(--border);
       text-align: left;
       vertical-align: top;
+      word-break: keep-all;
+      overflow-wrap: normal;
+      hyphens: none;
     }
 
     th {
       background: var(--bg-soft);
       color: var(--text-muted);
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 650;
     }
 
     td {
       color: var(--text-soft);
+    }
+
+    th,
+    td:first-child,
+    th code,
+    td code {
+      white-space: nowrap;
+    }
+
+    td strong {
+      color: var(--text-soft);
+      font-weight: 650;
     }
 
     tr:last-child td {
@@ -894,7 +1135,7 @@ const html = `<!doctype html>
       border: 1px solid var(--border);
       border-radius: var(--radius);
       background: var(--diagram-bg);
-      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+      box-shadow: var(--diagram-shadow);
       overflow: hidden;
     }
 
@@ -906,7 +1147,7 @@ const html = `<!doctype html>
       border-bottom: 1px solid var(--border);
       background: var(--diagram-panel);
       padding: 10px 12px;
-      color: #334155;
+      color: var(--diagram-title-text);
       font-size: 12px;
       font-weight: 750;
     }
@@ -939,6 +1180,58 @@ const html = `<!doctype html>
       border-radius: var(--radius);
       background: #fef2f2;
       color: #991b1b;
+    }
+
+    .chapter-pager {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 30px;
+    }
+
+    .chapter-pager.bottom {
+      margin: 68px 0 0;
+      padding-top: 0;
+    }
+
+    .pager-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      max-width: min(48%, 390px);
+      color: var(--text-soft);
+      text-decoration: none;
+      transition: color 0.16s ease;
+    }
+
+    .pager-link.next {
+      margin-left: auto;
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .pager-link:hover {
+      color: var(--blue);
+    }
+
+    .pager-label {
+      flex: 0 0 auto;
+      color: inherit;
+      font-size: 14px;
+      line-height: 1.42;
+      font-weight: 400;
+    }
+
+    .pager-title {
+      overflow: hidden;
+      max-width: 100%;
+      color: inherit;
+      font-size: 14px;
+      line-height: 1.42;
+      font-weight: 400;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .mobile-panel {
@@ -987,15 +1280,15 @@ const html = `<!doctype html>
     }
 
     @media (max-width: 1180px) {
-      .header-inner {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 12px;
-        padding: 0 20px;
+      :root {
+        --route-top-gap: 30px;
       }
 
-      .header-note {
-        display: none;
+      .header-inner {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 12px;
+        padding: 0 20px;
       }
 
       .brand {
@@ -1010,7 +1303,7 @@ const html = `<!doctype html>
 
       .shell {
         display: block;
-        padding: 20px;
+        padding: 30px 20px 20px;
       }
 
       .sidebar {
@@ -1034,8 +1327,12 @@ const html = `<!doctype html>
     }
 
     @media (max-width: 560px) {
+      :root {
+        --route-top-gap: 26px;
+      }
+
       .shell {
-        padding: 16px;
+        padding: 26px 16px 16px;
       }
 
       .header-inner {
@@ -1049,6 +1346,42 @@ const html = `<!doctype html>
 
       .brand-mark {
         flex: 0 0 auto;
+      }
+
+      .header-actions {
+        gap: 12px;
+      }
+
+      .theme-toggle {
+        width: 56px;
+        height: 30px;
+        --toggle-shift: 26px;
+      }
+
+      .theme-toggle-thumb {
+        top: 4px;
+        left: 4px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .theme-icon {
+        width: 13px;
+        height: 13px;
+      }
+
+      .header-divider {
+        height: 34px;
+      }
+
+      .github-link {
+        width: 36px;
+        height: 36px;
+      }
+
+      .github-link svg {
+        width: 25px;
+        height: 25px;
       }
 
       .jump-index {
@@ -1069,6 +1402,16 @@ const html = `<!doctype html>
         font-size: 22px;
       }
 
+      .chapter-pager {
+        flex-direction: column;
+      }
+
+      .pager-link.next {
+        margin-left: 0;
+        align-items: flex-start;
+        text-align: left;
+      }
+
       th,
       td {
         padding: 9px 10px;
@@ -1078,11 +1421,28 @@ const html = `<!doctype html>
 </head>
 <body>
   <a class="skip-link" href="#content">跳到正文</a>
-  <div class="progress" id="progress"></div>
   <header class="site-header">
     <div class="header-inner">
       <div class="brand"><span class="brand-mark" aria-hidden="true">hr</span><span class="brand-text">${pageTitle}</span></div>
-      <div class="header-note">从基础 Agent 到完整 Harness 策略的渐进式迭代方案</div>
+      <div class="header-actions" aria-label="页面操作">
+        <button class="theme-toggle" type="button" id="themeToggle" aria-label="切换深色模式" aria-pressed="false">
+          <span class="theme-toggle-thumb" aria-hidden="true">
+            <svg class="theme-icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2.5v2.2M12 19.3v2.2M4.7 4.7l1.6 1.6M17.7 17.7l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.7 19.3l1.6-1.6M17.7 6.3l1.6-1.6"></path>
+            </svg>
+            <svg class="theme-icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.5 14.4A7.8 7.8 0 0 1 9.6 3.5 8.5 8.5 0 1 0 20.5 14.4Z"></path>
+            </svg>
+          </span>
+        </button>
+        <span class="header-divider" aria-hidden="true"></span>
+        <a class="github-link" href="https://github.com/placeholder/financial-research-demo" target="_blank" rel="noopener noreferrer" aria-label="GitHub 仓库（占位链接）">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2C6.48 2 2 6.59 2 12.25c0 4.52 2.87 8.36 6.84 9.72.5.1.68-.22.68-.49 0-.24-.01-1.04-.01-1.89-2.78.62-3.37-1.22-3.37-1.22-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.93.85.09-.67.35-1.12.64-1.38-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.04 1.03-2.76-.1-.26-.45-1.31.1-2.72 0 0 .84-.28 2.75 1.05A9.3 9.3 0 0 1 12 6.95c.85 0 1.7.12 2.5.34 1.9-1.33 2.74-1.05 2.74-1.05.55 1.41.2 2.46.1 2.72.64.72 1.03 1.64 1.03 2.76 0 3.94-2.34 4.81-4.57 5.07.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.8 0 .27.18.59.69.49A10.18 10.18 0 0 0 22 12.25C22 6.59 17.52 2 12 2Z"></path>
+          </svg>
+        </a>
+      </div>
       <button class="menu-button" type="button" id="openMenu" aria-controls="mobilePanel" aria-expanded="false">目录</button>
     </div>
   </header>
@@ -1163,20 +1523,22 @@ flowchart LR
   </div>
 
   <script>
-    window.__HARNESS_MARKDOWN__ = ${escapedMarkdown};
+    window.__HARNESS_CHAPTERS__ = ${escapedChapters};
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
   <script>
     const article = document.getElementById("article");
+    const overview = document.getElementById("overview");
     const sideNav = document.getElementById("sideNav");
     const mobileNav = document.getElementById("mobileNav");
     const mobilePanel = document.getElementById("mobilePanel");
     const openMenu = document.getElementById("openMenu");
     const closeMenu = document.getElementById("closeMenu");
     const overviewToc = document.getElementById("overviewToc");
-    const progress = document.getElementById("progress");
+    const themeToggle = document.getElementById("themeToggle");
+    const baseTitle = document.title;
     const navGroups = [
       { title: "总览", dot: "", start: 0, end: 1 },
       { title: "Harness 基础", dot: "green", start: 2, end: 4 },
@@ -1184,7 +1546,12 @@ flowchart LR
       { title: "运行韧性", dot: "red", start: 9, end: 11 },
       { title: "附录", dot: "violet", start: 12, end: 12 },
     ];
-    let documentChapters = [];
+    const chapters = (window.__HARNESS_CHAPTERS__ || []).map((chapter, index) => ({
+      ...chapter,
+      index,
+      children: extractChildren(chapter.markdown, chapter.id),
+    }));
+    let documentChapters = chapters;
 
     function slugify(text) {
       return text
@@ -1196,40 +1563,61 @@ flowchart LR
         .replace(/^-|-$/g, "") || "section";
     }
 
-    function assignHeadingIds() {
+    function uniqueSlug(base, used) {
+      const count = used.get(base) || 0;
+      used.set(base, count + 1);
+      return count ? base + "-" + (count + 1) : base;
+    }
+
+    function extractChildren(markdown, chapterId) {
+      const used = new Map([[chapterId, 1]]);
+      return markdown
+        .split("\\n")
+        .map((line) => line.match(/^##\\s+(.+)$/))
+        .filter(Boolean)
+        .map((match) => {
+          const title = match[1].trim();
+          return { id: uniqueSlug(slugify(title), used), title };
+        });
+    }
+
+    function assignHeadingIds(chapter) {
       const used = new Map();
       document.querySelectorAll("#article h1, #article h2, #article h3").forEach((heading) => {
-        const base = slugify(heading.textContent);
-        const count = used.get(base) || 0;
-        used.set(base, count + 1);
-        heading.id = count ? \`\${base}-\${count + 1}\` : base;
+        const base = heading.tagName === "H1" ? chapter.id : slugify(heading.textContent);
+        heading.id = uniqueSlug(base, used);
       });
     }
 
-    function buildStructure() {
-      const chapters = [];
-      let current = null;
-      document.querySelectorAll("#article h1, #article h2").forEach((heading) => {
-        if (heading.tagName === "H1") {
-          current = { id: heading.id, title: heading.textContent.trim(), children: [] };
-          chapters.push(current);
-        } else if (current) {
-          current.children.push({ id: heading.id, title: heading.textContent.trim() });
-        }
-      });
-      return chapters;
+    function routeForChapter(chapter) {
+      return "#/" + encodeURIComponent(chapter.id);
+    }
+
+    function routeForHeading(chapter, child) {
+      return routeForChapter(chapter) + "/" + encodeURIComponent(child.id);
+    }
+
+    function parseRoute() {
+      if (!location.hash || location.hash === "#/") {
+        return { chapterId: "", headingId: "" };
+      }
+      if (!location.hash.startsWith("#/")) {
+        return null;
+      }
+      const parts = location.hash
+        .slice(2)
+        .split("/")
+        .filter(Boolean)
+        .map((part) => decodeURIComponent(part));
+      return { chapterId: parts[0] || "", headingId: parts[1] || "" };
     }
 
     function createLink(item) {
       const link = document.createElement("a");
-      link.href = "#" + item.id;
+      link.href = item.href || routeForChapter(item);
       link.textContent = item.title;
-      link.dataset.target = item.id;
+      link.dataset.target = item.chapterId || item.id;
       return link;
-    }
-
-    function chapterNo(index) {
-      return index < 12 ? String(index).padStart(2, "0") : "附";
     }
 
     function sidebarDisplayTitle(title, stripHarness) {
@@ -1256,8 +1644,18 @@ flowchart LR
         const dot = document.createElement("span");
         dot.className = group.dot ? "dot " + group.dot : "dot";
         dot.setAttribute("aria-hidden", "true");
-        const titleText = document.createElement("span");
+        const titleText = group.title === "总览"
+          ? document.createElement("a")
+          : document.createElement("span");
         titleText.textContent = sidebarDisplayTitle(group.title, stripHarness);
+        if (group.title === "总览") {
+          titleText.className = "overview-nav-link";
+          titleText.href = "#/";
+          titleText.dataset.target = "";
+          titleText.addEventListener("click", () => {
+            if (location.hash === "#/") renderRoute();
+          });
+        }
         title.append(dot, titleText);
 
         const list = document.createElement("ul");
@@ -1268,15 +1666,15 @@ flowchart LR
           const item = document.createElement("li");
           const link = document.createElement("a");
           link.className = "chapter-link";
-          link.href = "#" + chapter.id;
+          link.href = routeForChapter(chapter);
           link.dataset.target = chapter.id;
           link.addEventListener("click", () => {
-            setActive(chapter.id);
+            if (location.hash === link.getAttribute("href")) renderRoute();
           });
 
           const no = document.createElement("span");
           no.className = "nav-index";
-          no.textContent = chapterNo(index);
+          no.textContent = chapter.no;
 
           const titleText = document.createElement("span");
           titleText.className = "chapter-title-link";
@@ -1293,9 +1691,7 @@ flowchart LR
     }
 
     function findChapterForId(chapters, id) {
-      return chapters.find((chapter) => (
-        chapter.id === id || chapter.children.some((child) => child.id === id)
-      ));
+      return chapters.find((chapter) => chapter.id === id);
     }
 
     function createJumpLink(item, no) {
@@ -1313,15 +1709,24 @@ flowchart LR
 
     function renderOverviewToc(chapters) {
       overviewToc.replaceChildren();
-      chapters.forEach((chapter, index) => {
+      chapters.forEach((chapter) => {
         const item = document.createElement("li");
         item.className = "toc-chapter";
-        item.append(createJumpLink(chapter, chapterNo(index)));
+        item.append(createJumpLink({
+          id: chapter.id,
+          title: chapter.title,
+          href: routeForChapter(chapter),
+        }, chapter.no));
         if (chapter.children.length) {
           const list = document.createElement("ul");
           chapter.children.forEach((child) => {
             const childItem = document.createElement("li");
-            childItem.append(createJumpLink(child, ""));
+            childItem.append(createJumpLink({
+              id: child.id,
+              title: child.title,
+              href: routeForHeading(chapter, child),
+              chapterId: chapter.id,
+            }, ""));
             list.append(childItem);
           });
           item.append(list);
@@ -1330,16 +1735,19 @@ flowchart LR
       });
     }
 
-    function enhanceArticleHeadings(chapters) {
-      chapters.forEach((chapter, index) => {
-        const heading = document.getElementById(chapter.id);
-        if (!heading || heading.querySelector(".section-no")) return;
-        const no = document.createElement("span");
-        no.className = "section-no";
-        no.textContent = chapterNo(index);
-        no.setAttribute("aria-hidden", "true");
-        heading.prepend(no);
-      });
+    function enhanceArticleHeading(chapter) {
+      const heading = document.getElementById(chapter.id);
+      if (!heading || heading.querySelector(".section-no")) return;
+      const titleText = heading.textContent.trim();
+      heading.textContent = "";
+      const no = document.createElement("span");
+      no.className = "section-no";
+      no.textContent = chapter.no;
+      no.setAttribute("aria-hidden", "true");
+      const title = document.createElement("span");
+      title.className = "heading-title";
+      title.textContent = titleText;
+      heading.append(no, title);
     }
 
     function enhanceRevisionNotes() {
@@ -1348,6 +1756,41 @@ flowchart LR
         if (/^（在 v\\d+ 基础上新增\\/变更）$/.test(text)) {
           paragraph.classList.add("revision-note");
           paragraph.textContent = text.replace(/^（|）$/g, "");
+        }
+      });
+    }
+
+    function addOverviewReturnLink() {
+      const heading = article.querySelector("h1");
+      if (!heading) return;
+      const link = document.createElement("a");
+      link.className = "overview-return";
+      link.href = "#/";
+      link.textContent = "← 总览";
+      heading.append(link);
+    }
+
+    function directListItemText(item) {
+      const clone = item.cloneNode(true);
+      clone.querySelectorAll("ul, ol").forEach((list) => list.remove());
+      return clone.textContent.trim();
+    }
+
+    function isSequentialBulletItem(item) {
+      const text = directListItemText(item);
+      return /^(Stage|Layer)\\s+\\d+\\b/i.test(text)
+        || /^第?\\s*[一二三四五六七八九十\\d]+\\s*层(?:\\b|[（(:：])/.test(text);
+    }
+
+    function enhanceArticleLists() {
+      article.querySelectorAll("ol").forEach((list) => {
+        list.classList.add("numbered-badge-list");
+      });
+
+      article.querySelectorAll("ul").forEach((list) => {
+        const items = [...list.children].filter((child) => child.tagName === "LI");
+        if (items.length && items.every(isSequentialBulletItem)) {
+          list.classList.add("numbered-badge-list");
         }
       });
     }
@@ -1374,7 +1817,8 @@ flowchart LR
       article.querySelectorAll("table").forEach((table) => {
         if (table.parentElement.classList.contains("table-wrap")) return;
         const wrap = document.createElement("div");
-        wrap.className = "table-wrap";
+        const columnCount = table.querySelector("tr")?.children.length || 0;
+        wrap.className = "table-wrap" + (columnCount ? " cols-" + Math.min(columnCount, 5) : "");
         table.parentNode.insertBefore(wrap, table);
         wrap.append(table);
       });
@@ -1409,6 +1853,39 @@ flowchart LR
       });
     }
 
+    function createPagerLink(chapter, label, direction) {
+      const link = document.createElement("a");
+      link.className = "pager-link " + direction;
+      link.href = routeForChapter(chapter);
+
+      const labelEl = document.createElement("span");
+      labelEl.className = "pager-label";
+      labelEl.textContent = label + "：";
+
+      const title = document.createElement("span");
+      title.className = "pager-title";
+      title.textContent = sidebarDisplayTitle(chapter.title, true);
+
+      link.append(labelEl, title);
+      return link;
+    }
+
+    function createChapterPager(chapter, position) {
+      const nav = document.createElement("nav");
+      nav.className = "chapter-pager" + (position === "bottom" ? " bottom" : "");
+      nav.setAttribute("aria-label", "章节翻页导航");
+
+      const prev = chapters[chapter.index - 1];
+      const next = chapters[chapter.index + 1];
+      if (prev) nav.append(createPagerLink(prev, "上一篇", "prev"));
+      if (next) nav.append(createPagerLink(next, "下一篇", "next"));
+      return nav;
+    }
+
+    function addChapterPager(chapter) {
+      article.append(createChapterPager(chapter, "bottom"));
+    }
+
     function highlightCode() {
       article.querySelectorAll("pre code").forEach((code) => {
         if (!code.classList.contains("language-mermaid")) {
@@ -1427,26 +1904,59 @@ flowchart LR
       });
     }
 
-    function initScrollSpy() {
-      const headings = [...document.querySelectorAll("#overview, #article h1, #article h2")];
-      const observer = new IntersectionObserver((entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (visible?.target?.id && visible.target.id !== "overview") {
-          setActive(visible.target.id);
-        }
-      }, { rootMargin: "-84px 0px -72% 0px", threshold: [0, 1] });
-      headings.forEach((heading) => observer.observe(heading));
+    function currentTheme() {
+      return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
     }
 
-    function updateProgress() {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const ratio = max > 0 ? window.scrollY / max : 0;
-      progress.style.transform = \`scaleX(\${Math.min(1, Math.max(0, ratio))})\`;
+    function applyTheme(theme, shouldPersist) {
+      const nextTheme = theme === "dark" ? "dark" : "light";
+      document.documentElement.dataset.theme = nextTheme;
+      themeToggle.setAttribute("aria-pressed", String(nextTheme === "dark"));
+      themeToggle.setAttribute("aria-label", nextTheme === "dark" ? "切换浅色模式" : "切换深色模式");
+      if (shouldPersist) {
+        try {
+          localStorage.setItem("harness-theme", nextTheme);
+        } catch (error) {
+          // Ignore storage failures; the visual toggle should still work.
+        }
+      }
+      if (window.mermaid) {
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "loose",
+          theme: "base",
+          themeVariables: mermaidThemeVariables(),
+        });
+      }
+    }
+
+    function bindThemeToggle() {
+      applyTheme(currentTheme(), false);
+      themeToggle.addEventListener("click", () => {
+        applyTheme(currentTheme() === "dark" ? "light" : "dark", true);
+      });
+    }
+
+    function cssVar(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function mermaidThemeVariables() {
+      return {
+        fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Microsoft YaHei, sans-serif",
+        primaryColor: cssVar("--bg-elevated"),
+        primaryTextColor: cssVar("--text"),
+        primaryBorderColor: cssVar("--diagram-stroke"),
+        lineColor: cssVar("--text-muted"),
+        secondaryColor: cssVar("--blue-soft"),
+        tertiaryColor: cssVar("--bg-soft"),
+        noteBkgColor: cssVar("--amber-soft"),
+        noteTextColor: cssVar("--text-soft"),
+      };
     }
 
     function bindControls() {
+      bindThemeToggle();
       openMenu.addEventListener("click", () => {
         mobilePanel.classList.add("is-open");
         mobilePanel.setAttribute("aria-hidden", "false");
@@ -1464,54 +1974,110 @@ flowchart LR
           openMenu.setAttribute("aria-expanded", "false");
         }
       });
-      window.addEventListener("scroll", updateProgress, { passive: true });
-      window.addEventListener("resize", updateProgress);
     }
 
-    async function render() {
-      if (!window.marked || !window.hljs || !window.mermaid) {
-        article.innerHTML = '<div class="load-error">页面依赖加载失败，请确认网络可访问后刷新。</div>';
-        return;
+    async function renderMermaidIn(root) {
+      const nodes = [...root.querySelectorAll(".mermaid:not([data-processed='true'])")];
+      if (nodes.length) {
+        await mermaid.run({ nodes });
       }
-      marked.setOptions({ gfm: true, breaks: false, headerIds: false, mangle: false });
-      article.innerHTML = marked.parse(window.__HARNESS_MARKDOWN__);
-      assignHeadingIds();
+    }
+
+    function scrollToRouteTarget(headingId) {
+      const target = headingId
+        ? document.getElementById(headingId)
+        : article.querySelector("h1") || document.getElementById("content");
+      requestAnimationFrame(() => {
+        const nextTarget = target || document.getElementById("content");
+        const headerHeight = document.querySelector(".site-header")?.getBoundingClientRect().height || 0;
+        const routeGap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--route-top-gap")) || 0;
+        const nextTop = nextTarget.getBoundingClientRect().top + window.scrollY - headerHeight - routeGap;
+        window.scrollTo({ top: Math.max(0, nextTop), behavior: "auto" });
+      });
+    }
+
+    async function renderOverview(shouldScroll) {
+      document.title = baseTitle;
+      document.body.classList.remove("is-chapter");
+      article.hidden = true;
+      article.replaceChildren();
+      overview.hidden = false;
+      setActive("");
+      await renderMermaidIn(overview);
+      if (shouldScroll) scrollToRouteTarget("");
+    }
+
+    async function renderChapter(chapter, headingId) {
+      document.title = chapter.title + " | " + baseTitle;
+      document.body.classList.add("is-chapter");
+      overview.hidden = true;
+      article.hidden = false;
+      article.innerHTML = marked.parse(chapter.markdown);
+      assignHeadingIds(chapter);
       enhanceRevisionNotes();
+      enhanceArticleLists();
       prepareMermaid();
       enhanceTables();
       highlightCode();
       enhanceCodeBlocks();
-      const chapters = buildStructure();
+      enhanceArticleHeading(chapter);
+      addOverviewReturnLink();
+      addChapterPager(chapter);
+      setActive(chapter.id);
+      await renderMermaidIn(article);
+      scrollToRouteTarget(headingId);
+    }
+
+    async function renderRoute(options = {}) {
+      const route = parseRoute();
+      if (route === null) {
+        return;
+      }
+
+      const shouldScroll = options.scroll !== false;
+      if (!route.chapterId) {
+        await renderOverview(shouldScroll);
+        return;
+      }
+
+      const chapter = chapters.find((item) => item.id === route.chapterId);
+      if (!chapter) {
+        await renderOverview(shouldScroll);
+        return;
+      }
+
+      await renderChapter(chapter, route.headingId);
+    }
+
+    async function init() {
       documentChapters = chapters;
       renderChapterNav(chapters, sideNav, { stripHarness: true });
       renderChapterNav(chapters, mobileNav);
       renderOverviewToc(chapters);
-      enhanceArticleHeadings(chapters);
       bindControls();
-      initScrollSpy();
-      if (chapters[0]) setActive(chapters[0].id);
-      updateProgress();
 
+      if (!window.marked || !window.hljs || !window.mermaid) {
+        article.innerHTML = '<div class="load-error">页面依赖加载失败，请确认网络可访问后刷新。</div>';
+        article.hidden = false;
+        return;
+      }
+
+      marked.setOptions({ gfm: true, breaks: false, headerIds: false, mangle: false });
       mermaid.initialize({
         startOnLoad: false,
         securityLevel: "loose",
         theme: "base",
-        themeVariables: {
-          fontFamily: "ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, Microsoft YaHei, sans-serif",
-          primaryColor: "#ffffff",
-          primaryTextColor: "#111114",
-          primaryBorderColor: "#94a3b8",
-          lineColor: "#64748b",
-          secondaryColor: "#eff6ff",
-          tertiaryColor: "#f6f7f9",
-          noteBkgColor: "#fffbeb",
-          noteTextColor: "#51525a"
-        }
+        themeVariables: mermaidThemeVariables(),
       });
-      await mermaid.run();
+
+      window.addEventListener("hashchange", () => {
+        renderRoute();
+      });
+
+      await renderRoute({ scroll: Boolean(location.hash && location.hash.startsWith("#/")) });
     }
 
-    render();
+    init();
   </script>
 </body>
 </html>
