@@ -1,45 +1,45 @@
-# Harness 工程迭代：多 Agent 系统从 Demo 到生产的 10 轮进化
+# Harness Engineering Iterations: 10 Steps from a Multi-Agent Demo to Production
 
-> 从一个能跑的多 Agent Demo 出发，用 10 轮 Harness 迭代，逐步拆解「可控、可扩展、可恢复」的工程路径。
+> Starting from a working multi-agent demo, this project uses 10 rounds of Harness engineering iterations to systematically break down the path to "controllable, scalable, recoverable" production systems.
 
-## 🎯 这是什么
+## 🎯 What Is This
 
-一份关于 Harness 工程的系统性思考——以多 Agent 金融研究系统为案例，逐轮回答：
+A systematic exploration of Harness engineering — using a multi-agent financial research system as a case study, answering at each iteration:
 
-- 一个基础 Agent Loop 能做什么、不能做什么
-- 每一轮迭代解决了什么问题、引入了什么新约束
-- 从「能跑」到「能用」之间，工程上到底需要走多少步
+- What can a basic Agent Loop do, and where does it fall short
+- What problem does each iteration solve, and what new constraints does it introduce
+- How many engineering steps lie between "it runs" and "it works"
 
-## 📐 内容结构
+## 📐 Content Structure
 
-| 章节 | 主题 | 核心问题 |
-|------|------|---------|
-| v0 | 基础 Agent 出厂配置 | 没有 Harness 的最朴素形态是什么？ |
-| v1 | 工具分发与安全沙箱 | 工具怎么安全地接入和扩展？ |
-| v2 | 权限管线 | 金融数据敏感，怎么分级管控？ |
-| v3 | Hooks 扩展机制 | 循环膨胀怎么办？ |
-| v4 | 规划与待办管理 | 多 Agent 怎么同步状态？ |
-| v5 | Skill 按需知识加载 | 上下文窗口有限，知识怎么按需注入？ |
-| v6 | 上下文压缩 | 长流程怎么不溢出？ |
-| v7 | 记忆系统 | 用户偏好怎么跨会话保留？ |
-| v8 | System Prompt 运行时组装 | 5 个 Agent 怎么共用一套框架？ |
-| v9 | 错误恢复与韧性 | API 超时、级联故障怎么处理？ |
-| v10 | 子 Agent 与上下文隔离 | 执行细节怎么不污染调度层？ |
+| Iteration | Topic | Core Question |
+|-----------|-------|---------------|
+| v0 | Baseline Agent Configuration | What does the simplest form look like without any Harness? |
+| v1 | Tool Dispatch & Security Sandbox | How do you safely integrate and scale tools? |
+| v2 | Permission Pipeline | How do you enforce tiered access control for sensitive financial data? |
+| v3 | Hooks Extension Mechanism | How do you handle unbounded loop growth? |
+| v4 | Planning & Task Management | How do multiple Agents synchronize state? |
+| v5 | Skill On-Demand Knowledge Loading | With limited context windows, how do you inject knowledge on demand? |
+| v6 | Context Compression | How do you prevent overflow in long-running workflows? |
+| v7 | Memory System | How do you persist user preferences across sessions? |
+| v8 | System Prompt Runtime Assembly | How do 5 Agents share a single framework? |
+| v9 | Error Recovery & Resilience | How do you handle API timeouts and cascading failures? |
+| v10 | Sub-Agent & Context Isolation | How do you prevent execution details from polluting the orchestration layer? |
 
-## 🛠 技术栈
+## 🛠 Tech Stack
 
-- 纯静态 HTML，零构建依赖
-- [Marked.js](https://github.com/markedjs/marked) — Markdown 渲染
-- [Mermaid](https://mermaid.js.org/) — 架构图与时序图
-- [Prism.js](https://prismjs.com/) — 代码高亮
-- 响应式布局，支持深色模式
+- Pure static HTML, zero build dependencies
+- [Marked.js](https://github.com/markedjs/marked) — Markdown rendering
+- [Mermaid](https://mermaid.js.org/) — Architecture and sequence diagrams
+- [Prism.js](https://prismjs.com/) — Code syntax highlighting
+- Responsive layout with dark mode support
 
 ## 🔗 Live Demo
 
-[在线访问 →](https://your-demo-url.vercel.app)
+[View Online →](https://your-demo-url.vercel.app)
 
-## 📸 截图
+## 📸 Screenshots
 
-![总览页](screenshot-overview.png)
+![Overview](screenshot-overview.png)
 
 ---
