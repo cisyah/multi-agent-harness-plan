@@ -36,7 +36,7 @@ A systematic exploration of Harness engineering — using a multi-agent financia
 
 ## 🔗 Live Demo
 
-[View Online →](https://your-demo-url.vercel.app)
+[View Online →](https://multi-agent-harness-plan.vercel.app/)
 
 ## 📸 Screenshots
 
